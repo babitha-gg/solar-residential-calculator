@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solar Calculator — EcoSoch</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap');
+  *{font-family:'Outfit',sans-serif;box-sizing:border-box;}
+  body{background:#f8fafc;color:#0f172a;margin:0;padding:0;}
+  .site-header{background:#1A3A5C;padding:16px 40px;display:flex;align-items:center;justify-content:space-between;}
+  .logo{font-size:1.4rem;font-weight:800;color:#fff;letter-spacing:-0.5px;}
+  .logo span{color:#F4A228;}
+  .header-tag{background:#F4A228;color:#1A3A5C;font-weight:800;font-size:.72rem;padding:4px 14px;border-radius:20px;letter-spacing:.5px;}
+  .hero{background:linear-gradient(135deg,#1A3A5C 0%,#2B5FA1 100%);padding:36px 40px 44px;}
+  .hero h1{font-size:clamp(1.4rem,3vw,2rem);font-weight:800;color:#fff;line-height:1.2;}
+  .hero p{color:#B8D0F0;margin-top:8px;font-size:.95rem;}
+  .main{max-width:1400px;margin:0 auto;padding:28px 24px;}
+  .tabs{display:flex;gap:5px;margin-bottom:22px;background:#fff;border-radius:12px;padding:5px;border:1px solid #e2e8f0;width:fit-content;box-shadow:0 2px 8px -2px rgba(0,0,0,.06);}
+  .tab{font-weight:800;font-size:.75rem;padding:8px 18px;border-radius:8px;cursor:pointer;border:none;background:transparent;color:#94a3b8;transition:all .2s;text-transform:uppercase;letter-spacing:.04em;}
+  .tab.active{background:#1A3A5C;color:#fff;}
+  .tab:hover:not(.active){background:#f1f5f9;color:#1A3A5C;}
+  .panel{display:none;}.panel.active{display:block;}
+  /* Input card */
+  .input-card{background:#fff;border-radius:1.5rem;padding:0;border:1px solid #e2e8f0;box-shadow:0 4px 20px -5px rgba(0,0,0,.07);overflow:hidden;}
+  .input-card-title{font-size:1.25rem;font-weight:800;color:#1A3A5C;background:linear-gradient(135deg,#FFF3DC 0%,#FFE8B2 100%);text-align:center;padding:1.1rem 2rem;border-bottom:2px solid #F4A228;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:-.01em;}
+  .input-card-title i{color:#F4A228;font-size:1.3rem;}
+  .input-card-body{padding:2rem;}
+  /* BESS-style label */
+  .input-label{font-size:.7rem;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem;display:flex;align-items:center;gap:5px;}
+  /* Tooltip */
+  .tooltip-wrap{position:relative;display:inline-flex;}
+  .tooltip-wrap .tip{visibility:hidden;opacity:0;width:210px;background:#1e293b;color:#fff;text-align:left;border-radius:8px;padding:8px 10px;position:absolute;z-index:50;bottom:130%;left:50%;transform:translateX(-50%);font-size:.7rem;font-weight:400;text-transform:none;line-height:1.5;box-shadow:0 10px 20px -5px rgba(0,0,0,.3);transition:opacity .2s;pointer-events:none;}
+  .tooltip-wrap .tip::after{content:'';position:absolute;top:100%;left:50%;margin-left:-5px;border:5px solid transparent;border-top-color:#1e293b;}
+  .tooltip-wrap:hover .tip{visibility:visible;opacity:1;}
+  /* Input box */
+  .custom-input{display:flex;align-items:center;border:2px solid #cbd5e1;border-radius:1rem;padding:.55rem .9rem;background:#fff;transition:.2s;position:relative;}
+  .custom-input:focus-within{border-color:#1A3A5C;box-shadow:0 0 0 3px rgba(26,58,92,.08);}
+  .custom-input input,.custom-input select{font-size:1.05rem;font-weight:700;width:100%;border:none;outline:none;padding:0 .5rem;color:#0f172a;background:transparent;}
+  .custom-input select{cursor:pointer;}
+  .input-suffix{font-size:.7rem;font-weight:800;color:#94a3b8;white-space:nowrap;flex-shrink:0;}
+  .icon-box{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:.95rem;flex-shrink:0;}
+  .icon-bill{background:#fffcf0;color:#f59e0b;}
+  .icon-roof{background:#eff6ff;color:#2563eb;}
+  .icon-pct{background:#fdf4ff;color:#9333ea;}
+  .icon-area{background:#f0fdf4;color:#16a34a;}
+  .icon-load{background:#fff7ed;color:#ea580c;}
+  .icon-inv{background:#eff6ff;color:#2563eb;}
+  .icon-kwp{background:#fef2f2;color:#dc2626;}
+  /* Error state for inputs */
+  .custom-input.error{border-color:#ef4444;background:#fff5f5;}
+  .custom-input.error .icon-box{background:#fee2e2;color:#dc2626;}
+  .field-error{font-size:.72rem;font-weight:700;color:#ef4444;margin-top:5px;display:none;align-items:center;gap:4px;}
+  .field-error.show{display:flex;}
+  .field-error i{font-size:.8rem;}
+  .roof-preview{border-radius:12px;overflow:hidden;border:2px solid #e2e8f0;background:#000;}
+  .roof-preview img{width:100%;height:auto;display:block;transition:opacity .4s;}
+  .roof-caption{background:#1A3A5C;color:#fff;font-size:.7rem;font-weight:700;padding:6px 12px;text-align:center;letter-spacing:.3px;}
+  /* Callout */
+  #callout{display:none;background:#FFF3DC;color:#1A3A5C;font-weight:700;font-size:.82rem;padding:10px 16px;border-radius:10px;text-align:center;margin-bottom:10px;position:relative;border:2px solid #F4A228;animation:pulse 1.5s infinite;}
+  #callout::after{content:'';position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);border:8px solid transparent;border-top-color:#F4A228;border-bottom:none;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.75}}
+  /* Calc button */
+  .calc-btn{width:100%;padding:15px;background:#F4A228;color:#1A3A5C;border:none;border-radius:1rem;font-weight:800;font-size:1rem;cursor:pointer;transition:all .2s;letter-spacing:.03em;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;}
+  .calc-btn:hover{background:#e09520;transform:translateY(-1px);box-shadow:0 6px 20px -4px rgba(244,162,40,.4);}
+  .calc-btn:active{transform:translateY(0);}
+  /* Results */
+  .results-area{display:flex;flex-direction:column;gap:18px;}
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  .kpi{background:#fff;border-radius:1rem;border:1px solid #e2e8f0;padding:16px;box-shadow:0 2px 8px -2px rgba(0,0,0,.05);}
+  .kpi .lbl{font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;color:#64748b;font-weight:800;}
+  .kpi .val{font-size:1.35rem;font-weight:800;color:#0f172a;margin:4px 0 2px;}
+  .kpi .sub{font-size:.7rem;color:#94a3b8;font-weight:600;}
+  .kpi.hi{background:#1A3A5C;border-color:#1A3A5C;}
+  .kpi.hi .lbl,.kpi.hi .sub{color:#B8D0F0;}
+  .kpi.hi .val{color:#F4A228;}
+  .res-card{background:#fff;border-radius:1.5rem;border:1px solid #e2e8f0;padding:20px;box-shadow:0 2px 8px -2px rgba(0,0,0,.05);}
+  .res-card h3{font-size:.7rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+  .res-card h3 i{color:#F4A228;}
+  .tct-simple{width:100%;border-collapse:collapse;}
+  .tct-simple thead tr{background:#1A3A5C;}
+  .tct-simple thead th{color:#fff;padding:9px 13px;text-align:left;font-weight:800;font-size:.72rem;}
+  .tct-simple tbody tr{border-bottom:1px solid #f1f5f9;transition:background .15s;}
+  .tct-simple tbody tr:last-child{border-bottom:none;}
+  .tct-simple tbody tr:hover{background:#f8fafc;}
+  .tct-simple tbody tr.tct-active{background:#eff6ff;border-left:4px solid #2B5FA1;}
+  .tct-simple tbody td{padding:10px 13px;font-size:.9rem;color:#0f172a;font-weight:600;}
+  .tct-simple tbody tr.tct-active td{font-weight:800;color:#2B5FA1;}
+  .tct-badge{display:inline-block;background:#1A3A5C;color:#fff;font-size:.6rem;font-weight:800;padding:1px 7px;border-radius:4px;margin-left:7px;vertical-align:middle;}
+  .sav-viz{background:linear-gradient(135deg,#E6F4EC,#F0FAF4);border-radius:12px;padding:14px;}
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .bar-row:last-child{margin-bottom:0;}
+  .bar-lbl{width:110px;font-size:.8rem;color:#64748b;font-weight:600;}
+  .bar-track{flex:1;height:8px;background:#D8E8DD;border-radius:6px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:6px;background:#2E7D52;transition:width .8s ease;}
+  .bar-val{width:100px;text-align:right;font-weight:800;font-size:.85rem;color:#2E7D52;}
+  .cfg-tbl{width:100%;border-collapse:collapse;}
+  .cfg-tbl td{padding:7px 0;font-size:.88rem;border-bottom:1px solid #f1f5f9;}
+  .cfg-tbl td:first-child{color:#64748b;font-weight:600;}
+  .cfg-tbl td:last-child{text-align:right;font-weight:700;}
+  .cfg-tbl tr:last-child td{border:none;}
+  .badge{display:inline-block;padding:3px 9px;border-radius:6px;font-size:.72rem;font-weight:800;}
+  .badge.string{background:#EEF2FF;color:#4A60C6;}
+  .badge.solaredge{background:#FFF3DC;color:#B07A00;}
+  .badge.enphase{background:#FFE9E9;color:#B03030;}
+  .sld-container{background:#fff;border-radius:1.5rem;border:1px solid #e2e8f0;padding:28px;overflow-x:auto;box-shadow:0 2px 8px -2px rgba(0,0,0,.05);}
+  #sld-wrap{min-width:900px;}
+  #sld-wrap svg{width:100%;min-width:900px;height:auto;display:block;}
+  .sld-title{font-weight:800;font-size:1rem;color:#0f172a;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;}
+  .sld-sub{font-size:.78rem;color:#94a3b8;font-weight:600;}
+  .bom-btn{padding:6px 14px;border-radius:8px;border:2px solid #e2e8f0;background:#f8fafc;cursor:pointer;font-size:.75rem;font-weight:800;color:#64748b;transition:all .15s;}
+  .bom-btn.active{background:#1A3A5C;border-color:#1A3A5C;color:#fff;}
+  .act-btn{padding:11px 26px;border:none;border-radius:12px;cursor:pointer;font-weight:800;font-size:.88rem;transition:all .2s;}
+  .act-btn.s{background:#1A3A5C;color:#fff;}
+  .act-btn.s:hover{background:#2B5FA1;}
+  .act-btns{display:flex;gap:10px;justify-content:center;margin-top:4px;}
+  .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;color:#94a3b8;}
+  .empty .icon{font-size:2.5rem;margin-bottom:10px;}
+  @media(max-width:1024px){.kpi-row{grid-template-columns:repeat(2,1fr);}.site-header{padding:14px 20px;}.hero{padding:26px 20px 32px;}.main{padding:18px 14px;}}
+  @media(max-width:640px){.kpi-row{grid-template-columns:1fr 1fr;}.input-card{padding:1.1rem;}.two-col{grid-template-columns:1fr!important;}.three-col{grid-template-columns:1fr 1fr!important;}}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="logo">Eco<span>Soch</span> Solar</div>
+  <div class="header-tag">⚡ Residential Calculator</div>
+</header>
+<div class="hero">
+  <h1>Solar System Calculator for Individual Residences</h1>
+  <p>Design your rooftop solar — get instant pricing, savings &amp; single-line diagram.</p>
+</div>
+<div class="main">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('calculator')">⚡ Calculator</button>
+    <button class="tab" onclick="switchTab('bom')" style="display:none">📋 Bill of Materials</button>
+    <button class="tab" onclick="switchTab('sld')">🔌 Single-Line Diagram</button>
+  </div>
+
+  <div class="panel active" id="tab-calculator">
+    <div class="input-card mb-6">
+      <div class="input-card-title"><i class="ri-sun-fill"></i> Let's design your system ☀️</div>
+      <div class="input-card-body">
+
+      <!-- Row 1: Left fields + Right roof -->
+      <div class="grid gap-5 mb-5 two-col" style="grid-template-columns:1fr 1fr">
+        <div class="flex flex-col gap-4">
+          <!-- Monthly Bill -->
+          <div>
+            <div class="input-label">
+              Monthly Electricity Bill (₹)
+              <span class="tooltip-wrap"><i class="ri-information-line" style="color:#94a3b8;cursor:help;font-size:.9rem"></i><span class="tip">Average monthly electricity bill amount. Used to estimate your ideal solar system size.</span></span>
+            </div>
+            <div class="custom-input" id="ci-bill">
+              <div class="icon-box icon-bill"><i class="ri-flashlight-fill"></i></div>
+              <input type="number" id="monthlyBill" placeholder="e.g. 5000" oninput="markDirty();checkLimit(this,'ci-bill','err-bill',500000,'Must be ≤ ₹5,00,000')">
+              <span class="input-suffix">₹ / mo</span>
+            </div>
+            <div class="field-error" id="err-bill"><i class="ri-error-warning-fill"></i><span></span></div>
+          </div>
+          <!-- % of Bill -->
+          <div>
+            <div class="input-label">
+              % of Bill to Slash
+              <span class="tooltip-wrap"><i class="ri-information-line" style="color:#94a3b8;cursor:help;font-size:.9rem"></i><span class="tip">What % of your electricity bill should solar offset? 100% means full offset of the bill.</span></span>
+            </div>
+            <div class="custom-input" id="ci-pct">
+              <div class="icon-box icon-pct"><i class="ri-percent-fill"></i></div>
+              <input type="number" id="billOffset" placeholder="e.g. 100" oninput="markDirty();checkLimit(this,'ci-pct','err-pct',100,'Must be ≤ 100%')">
+              <span class="input-suffix">%</span>
+            </div>
+            <div class="field-error" id="err-pct"><i class="ri-error-warning-fill"></i><span></span></div>
+          </div>
+          <!-- Inverter -->
+          <div>
+            <div class="input-label">
+              Inverter Technology
+              <span class="tooltip-wrap"><i class="ri-information-line" style="color:#94a3b8;cursor:help;font-size:.9rem"></i><span class="tip">String: cost-effective standard. SolarEdge: panel-level optimisers. Enphase: microinverter per panel for best shade performance.</span></span>
+            </div>
+            <div class="custom-input">
+              <div class="icon-box icon-inv"><i class="ri-cpu-line"></i></div>
+              <select id="inverterType" onchange="markDirty()">
+                <option value="" disabled selected>Select inverter type</option>
+                <option value="string">String Inverter</option>
+                <option value="solaredge">SolarEdge (Optimisers)</option>
+                <option value="enphase">Enphase (Microinverters)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Roof Type + image -->
+        <div class="flex flex-col gap-3">
+          <div>
+            <div class="input-label">
+              Roof Type
+              <span class="tooltip-wrap"><i class="ri-information-line" style="color:#94a3b8;cursor:help;font-size:.9rem"></i><span class="tip">Flat Roof uses ballast mounting. HDGI Elevated uses hot-dip galvanised steel structure — allows better panel tilt angles.</span></span>
+            </div>
+            <div class="custom-input">
+              <div class="icon-box icon-roof"><i class="ri-home-3-fill"></i></div>
+              <select id="roofType" onchange="markDirty();updateRoofImage()">
+                <option value="" disabled selected>Select roof type</option>
+                <option value="flat">Flat Roof</option>
+                <option value="hdgi">HDGI Elevated</option>
+              </select>
+            </div>
+          </div>
+          <div class="roof-preview" style="flex:1">
+            <img id="roof-img" src="Flat_roof.png" alt="Roof Installation"/>
+            <div id="roof-caption" class="roof-caption">📷 Flat Roof Installation — EcoSoch</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Rooftop Space + Sanctioned Load + Override kWp -->
+      <div class="grid gap-4 mb-5 three-col" style="grid-template-columns:1fr 1fr 1fr">
+        <div>
+          <div class="input-label">
+            Rooftop Space (sq.ft)
+            <span class="tooltip-wrap"><i class="ri-information-line" style="color:#94a3b8;cursor:help;font-size:.9rem"></i><span class="tip">Shadow-free rooftop area where panels can be placed. Leave blank if unknown.</span></span>
+          </div>
+          <div class="custom-input" id="ci-area">
+            <div class="icon-box icon-area"><i class="ri-layout-4-line"></i></div>
+            <input type="number" id="rooftopSpace" placeholder="Optional" oninput="markDirty();checkLimit(this,'ci-area','err-area',500000,'Must be ≤ 5,00,000 sq.ft')">
+            <span class="input-suffix">sq.ft</span>
+          </div>
+          <div class="field-error" id="err-area"><i class="ri-error-warning-fill"></i><span></span></div>
+        </div>
+        <div>
+          <div class="input-label">
+            Sanctioned Load (kW)
+            <span class="tooltip-wrap"><i class="ri-information-line" style="color:#94a3b8;cursor:help;font-size:.9rem"></i><span class="tip">Your approved electricity connection capacity from the utility. Leave blank if unknown.</span></span>
+          </div>
+          <div class="custom-input" id="ci-load">
+            <div class="icon-box icon-load"><i class="ri-plug-line"></i></div>
+            <input type="number" id="sanctionedLoad" placeholder="Optional" step="0.5" oninput="markDirty();checkLimit(this,'ci-load','err-load',500000,'Must be ≤ 5,00,000 kW')">
+            <span class="input-suffix">kW</span>
+          </div>
+          <div class="field-error" id="err-load"><i class="ri-error-warning-fill"></i><span></span></div>
+        </div>
+        <div>
+          <div class="input-label">
+            Required kWp (Direct Override)
+            <span class="tooltip-wrap"><i class="ri-information-line" style="color:#94a3b8;cursor:help;font-size:.9rem"></i><span class="tip">Already know the system size you want? Enter it here — this overrides all other sizing inputs.</span></span>
+          </div>
+          <div class="custom-input" id="ci-kwp">
+            <div class="icon-box icon-kwp"><i class="ri-flashlight-line"></i></div>
+            <input type="number" id="overrideKwp" placeholder="Optional" step="0.5" oninput="markDirty();checkLimit(this,'ci-kwp','err-kwp',12,'Must be ≤ 12 kWp')">
+            <span class="input-suffix">kWp</span>
+          </div>
+          <div class="field-error" id="err-kwp"><i class="ri-error-warning-fill"></i><span></span></div>
+        </div>
+      </div>
+
+      <select id="sector" style="display:none"><option value="residential">Residential</option></select>
+
+      <div id="callout"><i class="ri-arrow-down-line"></i> You've updated inputs — click below to recalculate your design ↓</div>
+      <button class="calc-btn" onclick="runCalculate()"><i class="ri-sun-fill"></i> Calculate Design and Savings</button>
+      </div><!-- end input-card-body -->
+    </div>
+
+    <div id="results-wrap" style="display:none">
+      <div class="results-area" id="results-inner"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="tab-bom">
+    <div class="res-card mb-4">
+      <h3><i class="ri-list-check-2"></i> Bill of Materials</h3>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:.7rem;color:#64748b;font-weight:800;text-transform:uppercase">Filter:</span>
+        <div id="bom-filters" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;border-radius:12px;border:1px solid #e2e8f0">
+      <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+        <thead><tr style="background:#1A3A5C">
+          <th style="color:#fff;padding:11px 13px;text-align:left;font-weight:800;font-size:.72rem">#</th>
+          <th style="color:#fff;padding:11px 13px;text-align:left;font-weight:800;font-size:.72rem">Category</th>
+          <th style="color:#fff;padding:11px 13px;text-align:left;font-weight:800;font-size:.72rem">Description</th>
+          <th style="color:#fff;padding:11px 13px;text-align:right;font-weight:800;font-size:.72rem">Qty</th>
+        </tr></thead>
+        <tbody id="bom-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel" id="tab-sld">
+    <div class="sld-container">
+      <div class="sld-title">
+        <span>Single-Line Diagram (SLD)</span>
+        <span class="sld-sub" id="sld-config">Configure system in Calculator tab</span>
+      </div>
+      <div id="sld-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Limit check with error display ─────────────
+function checkLimit(el, inputId, errId, max, msg) {
+  var v = parseFloat(el.value);
+  var inputEl = document.getElementById(inputId);
+  var errEl = document.getElementById(errId);
+  if (!isNaN(v) && v > max) {
+    inputEl.classList.add('error');
+    errEl.classList.add('show');
+    errEl.querySelector('span').textContent = msg;
+  } else {
+    inputEl.classList.remove('error');
+    errEl.classList.remove('show');
+  }
+}
+
+// ── Dirty / Callout ───────────────────────────
+var isDirty = false;
+function markDirty() {
+  isDirty = true;
+  document.getElementById('callout').style.display = 'block';
+  document.getElementById('results-wrap').style.display = 'none';
+}
+
+function runCalculate() {
+  isDirty = false;
+  document.getElementById('callout').style.display = 'none';
+  calculate();
+}
+
+// ── ROOF IMAGES ───────────────────────────────
+const ROOF_IMGS = { flat:'Flat_roof.png', hdgi:'HDGI_Elevated.png' };
+(function(){ var f=new Image();f.src=ROOF_IMGS.flat; var h=new Image();h.src=ROOF_IMGS.hdgi; })();
+
+function updateRoofImage() {
+  var val=document.getElementById('roofType').value;
+  var img=document.getElementById('roof-img');
+  var cap=document.getElementById('roof-caption');
+  img.style.opacity='0';
+  setTimeout(function(){
+    img.src=ROOF_IMGS[val];
+    cap.textContent=val==='flat'?'📷 Flat Roof Installation — EcoSoch':'📷 HDGI Elevated Structure — EcoSoch';
+    img.style.opacity='1';
+  },200);
+}
+
+// ── PRICING ───────────────────────────────────
+const PD = {
+  flat:{
+    string:[
+      {min:2,max:2.999,r:'2–3 kWp',p:202000,panels:4,ic:null,dc:2.46},
+      {min:3,max:3.999,r:'3–4 kWp',p:261000,panels:6,ic:null,dc:3.69},
+      {min:4,max:4.999,r:'4–5 kWp',p:323000,panels:8,ic:null,dc:4.92},
+      {min:5,max:5.999,r:'5–6 kWp',p:384000,panels:9,ic:5,dc:5.535},
+      {min:6,max:6.999,r:'6–7 kWp',p:438000,panels:11,ic:6,dc:6.765},
+      {min:7,max:7.999,r:'7–8 kWp',p:494000,panels:13,ic:8,dc:7.995},
+      {min:8,max:8.999,r:'8–9 kWp',p:521000,panels:14,ic:8,dc:8.61},
+      {min:9,max:9.999,r:'9–10 kWp',p:620000,panels:17,ic:10,dc:10.455},
+      {min:10,max:11.999,r:'10–12 kWp',p:674000,panels:19,ic:10,dc:11.685}
+    ],
+    solaredge:[
+      {min:3,max:3.999,r:'3–4 kWp',p:265000,panels:6,ic:3,dc:3.69},
+      {min:4,max:4.999,r:'4–5 kWp',p:334000,panels:8,ic:4,dc:4.92},
+      {min:5,max:5.999,r:'5–6 kWp',p:458000,panels:9,ic:5,dc:5.535},
+      {min:6,max:6.75,r:'6–6.75 kWp',p:526000,panels:11,ic:5,dc:6.765},
+      {min:6.751,max:7.999,r:'6.75–8 kWp',p:596000,panels:13,ic:5,dc:7.995},
+      {min:8,max:8.999,r:'8–9 kWp',p:633000,panels:14,ic:8,dc:8.61},
+      {min:9,max:9.999,r:'9–10 kWp',p:703000,panels:16,ic:8,dc:9.84},
+      {min:10,max:11.999,r:'10–12 kWp',p:817000,panels:19,ic:10,dc:11.685}
+    ],
+    enphase:[
+      {min:2,max:2.999,r:'2–3 kWp',p:241000,panels:4,ic:null,dc:2.46},
+      {min:3,max:3.999,r:'3–4 kWp',p:319000,panels:6,ic:null,dc:3.69},
+      {min:4,max:4.999,r:'4–5 kWp',p:400000,panels:8,ic:null,dc:4.92},
+      {min:5,max:5.999,r:'5–6 kWp',p:500000,panels:9,ic:null,dc:5.535},
+      {min:6,max:6.999,r:'6–7 kWp',p:573000,panels:11,ic:null,dc:6.765},
+      {min:7,max:7.999,r:'7–8 kWp',p:649000,panels:13,ic:null,dc:7.995},
+      {min:8,max:8.999,r:'8–9 kWp',p:687000,panels:14,ic:null,dc:8.61},
+      {min:9,max:9.999,r:'9–10 kWp',p:763000,panels:16,ic:null,dc:9.84},
+      {min:10,max:11.999,r:'10–12 kWp',p:838000,panels:19,ic:null,dc:11.685}
+    ]
+  },
+  hdgi:{
+    string:[
+      {min:2,max:2.999,r:'2–3 kWp',p:207000,panels:4,ic:null,dc:2.46},
+      {min:3,max:3.999,r:'3–4 kWp',p:268000,panels:6,ic:null,dc:3.69},
+      {min:4,max:4.999,r:'4–5 kWp',p:337000,panels:8,ic:null,dc:4.92},
+      {min:5,max:5.999,r:'5–6 kWp',p:395000,panels:9,ic:5,dc:5.535},
+      {min:6,max:6.999,r:'6–7 kWp',p:453000,panels:11,ic:6,dc:6.765},
+      {min:7,max:7.999,r:'7–8 kWp',p:511000,panels:13,ic:8,dc:7.995},
+      {min:8,max:8.999,r:'8–9 kWp',p:540000,panels:14,ic:8,dc:8.61},
+      {min:9,max:9.999,r:'9–10 kWp',p:598000,panels:16,ic:10,dc:9.84},
+      {min:10,max:11.999,r:'10–12 kWp',p:700000,panels:19,ic:10,dc:11.685}
+    ],
+    solaredge:[
+      {min:3,max:3.999,r:'3–4 kWp',p:272000,panels:6,ic:3,dc:3.69},
+      {min:4,max:4.999,r:'4–5 kWp',p:345000,panels:8,ic:4,dc:4.92},
+      {min:5,max:5.999,r:'5–6 kWp',p:414000,panels:9,ic:5,dc:5.535},
+      {min:6,max:6.75,r:'6–6.75 kWp',p:474000,panels:11,ic:5,dc:6.765},
+      {min:6.751,max:7.999,r:'6.75–8 kWp',p:536000,panels:13,ic:5,dc:7.995},
+      {min:8,max:8.999,r:'8–9 kWp',p:571000,panels:14,ic:8,dc:8.61},
+      {min:9,max:9.999,r:'9–10 kWp',p:631000,panels:16,ic:8,dc:9.84},
+      {min:10,max:11.999,r:'10–12 kWp',p:734000,panels:19,ic:10,dc:11.685}
+    ],
+    enphase:[
+      {min:2,max:2.999,r:'2–3 kWp',p:246000,panels:4,ic:null,dc:2.46},
+      {min:3,max:3.999,r:'3–4 kWp',p:326000,panels:6,ic:null,dc:3.69},
+      {min:4,max:4.999,r:'4–5 kWp',p:410000,panels:8,ic:null,dc:4.92},
+      {min:5,max:5.999,r:'5–6 kWp',p:511000,panels:9,ic:null,dc:5.535},
+      {min:6,max:6.999,r:'6–7 kWp',p:588000,panels:11,ic:null,dc:6.765},
+      {min:7,max:7.999,r:'7–8 kWp',p:666000,panels:13,ic:null,dc:7.995},
+      {min:8,max:8.999,r:'8–9 kWp',p:706000,panels:14,ic:null,dc:8.61},
+      {min:9,max:9.999,r:'9–10 kWp',p:784000,panels:16,ic:null,dc:9.84},
+      {min:10,max:11.999,r:'10–12 kWp',p:864000,panels:19,ic:null,dc:11.685}
+    ]
+  }
+};
+
+function getSubsidy(kwp){if(kwp<=2)return 30000;if(kwp<=3)return 48000;return 78000;}
+
+function calcRatings(cr){
+  var inv=cr.inv,panels=cr.panels,strings=panels<=8?1:2,kwInv;
+  if(inv==='enphase')kwInv=panels*0.295;
+  else kwInv=cr.ic?cr.ic:cr.dc<=3.0?3:cr.dc<=5.0?4:5;
+  var is1ph=kwInv<5,phase=is1ph?'1-Ph 230V':'3-Ph 415V';
+  var iAC=is1ph?(kwInv*1000/230):(kwInv*1000/(Math.sqrt(3)*415));
+  var iDesign=iAC*1.10;
+  var MCB_STDS=[6,16,20,25,32,40,63];
+  var mcb=MCB_STDS.find(function(s){return s>iDesign;})||63;
+  var acCable=mcb<=16?'2.5mm² Cu':mcb<=25?'6mm² Cu':'10mm² Cu';
+  var spdAC='280V/ph Type 2',spdDC='DC SPD 1000V Type 2',ISC=13.86,dcFuse=25;
+  var iIsol=ISC*strings*1.25;
+  var dcIsol=[25,32,40,63].find(function(s){return s>=iIsol;})||63;
+  return{kwInv:kwInv.toFixed(1),phase:phase,strings:strings,mcb:mcb,acCable:acCable,spdAC:spdAC,dcFuse:dcFuse,dcIsol:dcIsol,spdDC:spdDC};
+}
+
+function getBOM(inv){
+  var panels=CR?CR.panels:0;
+  var panelQty=panels>0?panels+' nos':'Per tier';
+  var invDesc,invQty;
+  if(inv==='string'){invDesc='String Inverter like Deye / Growatt / Solis 3-Phase';invQty='1 no';}
+  else if(inv==='solaredge'){invDesc='SolarEdge HD-Wave Inverter 3-Phase';invQty='1 no';}
+  else{invDesc='Enphase IQ8 Microinverter';invQty=panels>0?panels+' nos (1 per panel)':'Per panel';}
+  var rows=[
+    {c:'Solar Panels',d:'Adani 545Wp MonoPerc DCR Panels',q:panelQty},
+    {c:'Inverter',d:invDesc,q:invQty}
+  ];
+  if(inv==='solaredge')rows.push({c:'Inverter',d:'SolarEdge Power Optimiser (1 per panel)',q:panelQty+' (1 per panel)'});
+  rows.push(
+    {c:'Electrical',d:'DCDB 1-In 1-Out 220×190×100mm'+(inv==='enphase'?' (N/A for Enphase)':''),q:inv==='enphase'?'N/A':'1'},
+    {c:'Electrical',d:'3Ph EcoSoch ACDB – up to 10.5 kWp',q:'1'},
+    {c:'Electrical',d:'Panel Connector MC4 w/ Lugs Staubli',q:'4'},
+    {c:'Structure',d:'Flat Roof Mounting Structure (up to parapet)',q:'1 set'},
+    {c:'AC Cabling',d:'4 Core × 4 Sqmm Cu Flexible Cable — AJB to Meter',q:'50 m'},
+    {c:'AC Cabling',d:'UPVC Conduit 25mm + Fittings',q:'50 m'},
+    {c:'AC Cabling',d:'End Sleeve 4 Sqmm Copper',q:'25 nos'},
+    {c:'AC Cabling',d:'Twin Ferrules 4 Sqmm Cu',q:'10 nos'},
+    {c:'DC Cabling',d:'DC Cable 4 Sqmm — 1 Core Red + 1 Core Black',q:'100 m'},
+    {c:'DC Cabling',d:'End Sleeve 6 Sqmm Copper',q:'20 nos'},
+    {c:'DC Cabling',d:'Twin Ferrules 6 Sqmm Cu',q:'5 nos'},
+    {c:'DC Cabling',d:'UPVC Conduit 20mm + Fittings',q:'50 m'},
+    {c:'Earthing',d:'Earthing Full Kit 14.2mm × 1.2m, 100 micron',q:'3 nos'},
+    {c:'Earthing',d:'Earthing Chamber PVC',q:'3 nos'},
+    {c:'Earthing',d:'Lightning Arrester Conventional 1M',q:'1 no'},
+    {c:'Earthing',d:'Structure Earthing: Down Conductor 16sqmm Al White',q:'50 m'},
+    {c:'Earthing',d:'Structure Earthing: Clamp 16sqmm Metal SS',q:'55 nos'},
+    {c:'Earthing',d:'AC Earthing: Down Conductor 16sqmm Al White',q:'50 m'},
+    {c:'Earthing',d:'AC Earthing: Clamp 16sqmm Metal SS',q:'55 nos'},
+    {c:'Earthing',d:'LA Earthing: Down Conductor 16sqmm Al White',q:'50 m'},
+    {c:'Earthing',d:'LA Earthing: Clamp 16sqmm Metal SS',q:'55 nos'},
+    {c:'Fasteners',d:'Hex Bolt M8×25mm',q:'10 nos'},
+    {c:'Fasteners',d:'Hex Nut M8',q:'10 nos'},
+    {c:'Fasteners',d:'Spring Washer M8 + Plain Washer M8',q:'10 each'},
+    {c:'Accessories',d:'Plain Washer M5',q:'165 nos'},
+    {c:'Accessories',d:'Self Tapping Screw 1½" SS304',q:'165 nos'},
+    {c:'Accessories',d:'Wall Plug M6×30',q:'165 nos'},
+    {c:'Accessories',d:'Hex Coach Screw M8×50mm',q:'8 nos'},
+    {c:'Accessories',d:'Silicon Clear GP Wacker',q:'1 no'},
+    {c:'Accessories',d:'Insulation Tape — Red, Yellow, Blue, Black, Green',q:'1 each'},
+    {c:'Accessories',d:'Cable Tie 295mm Black + 100mm White',q:'25 + 20'},
+    {c:'Accessories',d:'Din Mounting Rail',q:'0.5 m'},
+    {c:'Accessories',d:'Safety Stickers + Warning Labels',q:'1 set'},
+    {c:'Accessories',d:'Bescom Meter Reading Sheet',q:'1 no'},
+    {c:'Accessories',d:'Solar Panel Cleaning Mop',q:'1 no'},
+    {c:'Accessories',d:'Water Draining Clamp 35mm',q:'38 nos'},
+    {c:'Monitoring',d:'TP-Link Wi-Fi Range Extender (Solar Monitoring)',q:'1 no'},
+    {c:'Monitoring',d:'Batla Ladder 5.5ft',q:'1 no'},
+    {c:'DCDB Components',d:'SPD DC Type 2 Citel DS50PVS-1000',q:'2 nos'},
+    {c:'DCDB Components',d:'Fuse Holder USM1HEL with 15/30/32A Fuse',q:'2 nos'},
+    {c:'DCDB Components',d:'Isolator Switch 25A 2-Pole Hager',q:'2 nos'},
+    {c:'DCDB Components',d:'Connector End ConnectWell',q:'5 nos'},
+    {c:'DCDB Components',d:'Enclosure Hensel KV 8112M IP65',q:'1 no'},
+    {c:'ACDB Components',d:'SPD AC 3-Phase Citel DS440S-280/G',q:'1 no'},
+    {c:'ACDB Components',d:'MCB 25A 4-Pole',q:'1 no'},
+    {c:'ACDB Components',d:'Enclosure KV 8112M IP65',q:'1 no'},
+    {c:'ACDB Components',d:'Connector End',q:'10 nos'},
+    {c:'ACDB Components',d:'Auxiliary Contact S2C-H6-11R',q:'1 no'}
+  );
+  return rows;
+}
+
+var CR=null, bomFilter='All';
+
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach(function(t,i){t.classList.toggle('active',['calculator','bom','sld'][i]===id);});
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('tab-'+id).classList.add('active');
+  if(id==='bom')renderBOM();
+  if(id==='sld')renderSLD();
+}
+
+function calculate(){
+  var bill=parseFloat(document.getElementById('monthlyBill').value)||0;
+  var roof=document.getElementById('roofType').value||'flat';
+  var inv=document.getElementById('inverterType').value||'string';
+  var sector='residential';
+  var offPct=Math.min(100,Math.max(0,parseFloat(document.getElementById('billOffset').value)||100));
+  var rooftopSqft=parseFloat(document.getElementById('rooftopSpace').value)||0;
+  var sanctioned=parseFloat(document.getElementById('sanctionedLoad').value)||0;
+  var clientKwp=parseFloat(document.getElementById('overrideKwp').value);
+
+  var wrap=document.getElementById('results-wrap');
+
+  if(!bill||bill<100){
+    wrap.style.display='block';
+    document.getElementById('results-inner').innerHTML='<div class="empty"><div class="icon">☀️</div><p>Please enter a monthly bill to see results</p></div>';
+    return;
+  }
+
+  var TARIFF=7;
+  var UPD=(inv==='string')?3.6:4;
+  var SQM_PER_PANEL=21.528;
+  var kwp;
+  if(!isNaN(clientKwp)&&clientKwp>0){kwp=clientKwp;}
+  else{
+    var billKwp=Math.ceil(bill/(TARIFF*30*UPD));
+    var spaceKwp=rooftopSqft>0?rooftopSqft/SQM_PER_PANEL:9999;
+    var sanctionKwp=sanctioned>0?sanctioned:9999;
+    kwp=Math.min(spaceKwp,sanctionKwp,billKwp)*(offPct/100);
+    kwp=Math.max(2,Math.min(Math.round(kwp*10)/10,12));
+  }
+
+  var tiers=PD[roof][inv];
+  var tier=tiers.find(function(t){return kwp>=t.min&&kwp<=t.max;})||tiers[tiers.length-1];
+  var price=tier.p;
+  var sub=getSubsidy(kwp);
+  var net=price-sub;
+  var wprice=Math.round(net/(tier.dc*1000));
+  var mGen=Math.round(kwp*UPD*30);
+  var yGen=mGen*12;
+  var gen25=yGen*25;
+  var mSav=Math.round(mGen*TARIFF);
+  var ySav=mSav*12;
+  var s25=ySav*25;
+
+  CR={kwp:kwp,tier:tier,price:price,sub:sub,net:net,wprice:wprice,mGen:mGen,yGen:yGen,gen25:gen25,mSav:mSav,ySav:ySav,s25:s25,roof:roof,inv:inv,panels:tier.panels,ic:tier.ic,dc:tier.dc,sector:sector,rooftopSqft:rooftopSqft,sanctioned:sanctioned};
+
+  wrap.style.display='block';
+  renderResults(CR,tiers,kwp);
+
+  var ap=document.querySelector('.panel.active').id;
+  if(ap==='tab-bom')renderBOM();
+  if(ap==='tab-sld')renderSLD();
+}
+
+var fmt=function(n){return '₹'+Math.round(n).toLocaleString('en-IN');};
+var fmtN=function(n){return Math.round(n).toLocaleString('en-IN');};
+var badge=function(t){var m={string:'String Inverter',solaredge:'SolarEdge',enphase:'Enphase Micro'};return '<span class="badge '+t+'">'+m[t]+'</span>';};
+
+function renderResults(r,tiers,kwp){
+  var rl=r.roof==='flat'?'Flat Roof':'HDGI Elevated';
+  var techRows=['string','solaredge','enphase'].map(function(inv){
+    var tlist=PD[r.roof][inv];
+    var t=tlist.find(function(x){return r.kwp>=x.min&&r.kwp<=x.max;})||tlist[tlist.length-1];
+    var isActive=inv===r.inv;
+    var labels={string:'String',solaredge:'SolarEdge',enphase:'Enphase'};
+    var txt=labels[inv]+' will be around '+fmt(t.p).replace('₹','Rs ');
+    return '<tr class="'+(isActive?'tct-active':'')+'"><td>'+txt+(isActive?'<span class="tct-badge">✓ Selected</span>':'')+'</td></tr>';
+  }).join('');
+
+  var savBars=[[r.mSav,15000,'Monthly savings'],[r.ySav,180000,'Yearly savings'],[r.s25,4500000,'25-yr savings']].map(function(arr){
+    var v=arr[0],mx=arr[1],l=arr[2];
+    return '<div class="bar-row"><div class="bar-lbl">'+l+'</div><div class="bar-track"><div class="bar-fill" style="width:'+Math.min(100,v/mx*100).toFixed(1)+'%"></div></div><div class="bar-val">'+fmt(v)+'</div></div>';
+  }).join('');
+
+  var spaceRow=r.rooftopSqft>0?'<tr><td>Rooftop Space</td><td>'+r.rooftopSqft+' sq.ft</td></tr>':'';
+  var sanctRow=r.sanctioned>0?'<tr><td>Sanctioned Load</td><td>'+r.sanctioned+' kW</td></tr>':'';
+  var invSize=r.ic?r.ic+' kW 3-Phase':(r.panels*0.295).toFixed(2)+' kW (Micro)';
+
+  document.getElementById('results-inner').innerHTML=
+    '<div class="kpi-row">'+
+      '<div class="kpi hi"><div class="lbl">System Size</div><div class="val">'+r.kwp.toFixed(1)+' kWp</div><div class="sub">'+r.panels+' panels × 545Wp</div></div>'+
+      '<div class="kpi"><div class="lbl">Total Price (incl. GST)</div><div class="val">'+fmt(r.price)+'</div><div class="sub">'+r.wprice+' ₹/Wp net</div></div>'+
+      '<div class="kpi"><div class="lbl">Govt. Subsidy</div><div class="val">'+fmt(r.sub)+'</div><div class="sub">PM Surya Ghar scheme</div></div>'+
+      '<div class="kpi"><div class="lbl">Net Effective Price</div><div class="val">'+fmt(r.net)+'</div><div class="sub">After subsidy credit</div></div>'+
+    '</div>'+
+    '<div class="grid gap-4" style="grid-template-columns:1fr 1fr">'+
+      '<div class="flex flex-col gap-4">'+
+        '<div class="res-card">'+
+          '<h3><i class="ri-money-rupee-circle-line"></i> Technology-wise Cost — '+r.kwp.toFixed(1)+' kWp · '+rl+'</h3>'+
+          '<table class="tct-simple"><thead><tr><th>Technology wise Cost</th></tr></thead><tbody>'+techRows+'</tbody></table>'+
+        '</div>'+
+        '<div class="res-card">'+
+          '<h3><i class="ri-bar-chart-line"></i> Savings Summary</h3>'+
+          '<div class="sav-viz">'+savBars+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="res-card">'+
+        '<h3><i class="ri-settings-3-line"></i> System Configuration</h3>'+
+        '<table class="cfg-tbl">'+
+          '<tr><td>Roof Type</td><td>'+rl+'</td></tr>'+
+          '<tr><td>Inverter</td><td>'+badge(r.inv)+'</td></tr>'+
+          '<tr><td>System Size</td><td>'+r.kwp.toFixed(1)+' kWp</td></tr>'+
+          '<tr><td>No. of Panels</td><td>'+r.panels+' × 545Wp</td></tr>'+
+          '<tr><td>DC Capacity</td><td>'+r.dc+' kWp</td></tr>'+
+          '<tr><td>AC Inverter Size</td><td>'+invSize+'</td></tr>'+
+          spaceRow+sanctRow+
+          '<tr><td>Monthly Generation</td><td>'+fmtN(r.mGen)+' kWh</td></tr>'+
+          '<tr><td>Yearly Generation</td><td>'+fmtN(r.yGen)+' kWh</td></tr>'+
+          '<tr><td>25-Year Generation</td><td>'+fmtN(r.gen25)+' kWh</td></tr>'+
+          '<tr><td>Monthly Savings</td><td>'+fmt(r.mSav)+'</td></tr>'+
+          '<tr><td>Yearly Savings</td><td>'+fmt(r.ySav)+'</td></tr>'+
+          '<tr><td>25-Year Savings</td><td>'+fmt(r.s25)+'</td></tr>'+
+        '</table>'+
+      '</div>'+
+    '</div>'+
+    '<div class="act-btns"><button class="act-btn s" onclick="switchTab(\'sld\')">🔌 View SLD</button></div>';
+}
+
+function renderBOM(){
+  var inv=CR?CR.inv:'string';
+  var data=getBOM(inv);
+  var cats=['All'].concat(Array.from(new Set(data.map(function(r){return r.c;}))));
+  document.getElementById('bom-filters').innerHTML=cats.map(function(c){
+    return '<button class="bom-btn '+(bomFilter===c?'active':'')+'" onclick="setBomFilter(\''+c+'\')">'+c+'</button>';
+  }).join('');
+  var fil=bomFilter==='All'?data:data.filter(function(r){return r.c===bomFilter;});
+  var h='',cur=null,i=1;
+  fil.forEach(function(r){
+    if(r.c!==cur){cur=r.c;h+='<tr style="background:#fffbeb"><td colspan="4" style="padding:9px 13px;font-weight:800;font-size:.7rem;text-transform:uppercase;color:#0f172a;letter-spacing:.04em">'+r.c+'</td></tr>';}
+    h+='<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:9px 13px;color:#64748b;font-weight:600">'+i+'</td><td style="padding:9px 13px;color:#64748b;font-size:.82rem">'+r.c+'</td><td style="padding:9px 13px;font-weight:600">'+r.d+'</td><td style="padding:9px 13px;text-align:right;font-weight:700">'+r.q+'</td></tr>';
+    i++;
+  });
+  h+='<tr style="background:#f0fdf4"><td colspan="3" style="padding:10px 13px;font-weight:800;color:#166534">Total line items</td><td style="padding:10px 13px;text-align:right;font-weight:800;color:#166534">'+fil.length+'</td></tr>';
+  document.getElementById('bom-body').innerHTML=h;
+}
+function setBomFilter(c){bomFilter=c;renderBOM();}
+
+function renderSLD(){
+  var wrap=document.getElementById('sld-wrap'),conf=document.getElementById('sld-config');
+  if(!CR){wrap.innerHTML='<div class="empty"><div class="icon">🔌</div><p>Run the calculator first</p></div>';conf.textContent='Configure in Calculator tab';return;}
+  conf.textContent='';
+  if(CR.inv==='string')wrap.innerHTML=sldString();
+  else if(CR.inv==='solaredge')wrap.innerHTML=sldSE();
+  else wrap.innerHTML=sldEN();
+}
+
+function sldString(){
+  var s=CR.panels<=8?1:2,pps=Math.ceil(CR.panels/s),R=calcRatings(CR);
+  var LY=s===2?470:430;
+  var VH=LY+70;
+  var strings='';
+  for(var si=0;si<s;si++){
+    var y=95+si*165;
+    var thisPps=(si===s-1)?(CR.panels-pps*(s-1)):pps;
+    strings+='<rect x="18" y="'+y+'" width="150" height="150" rx="10" fill="#E6F4EC" stroke="#2E7D52" stroke-width="2" filter="url(#sh)"/>';
+    strings+='<text x="93" y="'+(y+16)+'" text-anchor="middle" font-weight="700" font-size="13.8" fill="#2E7D52">String '+(si+1)+'</text>';
+    strings+='<rect x="28" y="'+(y+26)+'" width="13" height="30" rx="2" fill="#2B5FA1" stroke="#1A3A5C" stroke-width=".5"/>';
+    strings+='<text x="34" y="'+(y+66)+'" text-anchor="middle" font-size="9.4" fill="#1A3A5C" font-weight="700">1</text>';
+    strings+='<circle cx="62" cy="'+(y+41)+'" r="2" fill="#2B5FA1" opacity=".6"/><circle cx="74" cy="'+(y+41)+'" r="2" fill="#2B5FA1" opacity=".6"/><circle cx="86" cy="'+(y+41)+'" r="2" fill="#2B5FA1" opacity=".6"/><circle cx="98" cy="'+(y+41)+'" r="2" fill="#2B5FA1" opacity=".6"/><circle cx="110" cy="'+(y+41)+'" r="2" fill="#2B5FA1" opacity=".6"/>';
+    strings+='<rect x="124" y="'+(y+26)+'" width="13" height="30" rx="2" fill="#2B5FA1" stroke="#1A3A5C" stroke-width=".5"/>';
+    strings+='<text x="130" y="'+(y+66)+'" text-anchor="middle" font-size="9.4" fill="#1A3A5C" font-weight="700">'+thisPps+'</text>';
+    strings+='<text x="83" y="'+(y+88)+'" text-anchor="middle" font-size="11.2" fill="#1A3A5C" font-weight="600">'+thisPps+' × 545Wp = '+(thisPps*545/1000).toFixed(2)+'kWp</text>';
+    var ey=y+150;
+    strings+='<line x1="83" y1="'+ey+'" x2="83" y2="'+(ey+18)+'" stroke="#2E7D52" stroke-width="1.5" stroke-dasharray="4,3"/>';
+    strings+='<line x1="67" y1="'+(ey+18)+'" x2="99" y2="'+(ey+18)+'" stroke="#2E7D52" stroke-width="2.2"/><line x1="71" y1="'+(ey+24)+'" x2="95" y2="'+(ey+24)+'" stroke="#2E7D52" stroke-width="1.6"/><line x1="75" y1="'+(ey+30)+'" x2="91" y2="'+(ey+30)+'" stroke="#2E7D52" stroke-width="1"/>';
+    strings+='<text x="83" y="'+(ey+42)+'" text-anchor="middle" font-size="9.4" fill="#2E7D52" font-weight="700">Structure Earthing</text>';
+    strings+='<line x1="168" y1="170" x2="243" y2="170" stroke="#E04545" stroke-width="2" marker-end="url(#ag)"/><text x="206" y="163" text-anchor="middle" font-size="9.4" fill="#B03030">DC+</text>';
+    strings+='<line x1="168" y1="182" x2="243" y2="182" stroke="#1A3A5C" stroke-width="2" marker-end="url(#a1)"/><text x="206" y="196" text-anchor="middle" font-size="9.4" fill="#1A3A5C">DC−</text>';
+  }
+  return '<svg viewBox="-70 0 1310 '+VH+'" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,Calibri,sans-serif" style="width:100%;height:auto"><defs><marker id="ag" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#E04545"/></marker><marker id="a1" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#1A3A5C"/></marker><marker id="ar" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#FF69B4"/></marker><filter id="sh"><feDropShadow dx="1" dy="2" stdDeviation="3" flood-opacity="0.12"/></filter></defs>'+
+  '<text x="-42" y="82" text-anchor="middle" font-size="9.0" fill="#B8860B" font-weight="700">Lightning</text><text x="-42" y="93" text-anchor="middle" font-size="9.0" fill="#B8860B" font-weight="700">Arrester (LA)</text><polygon points="-52,121 -42,107 -32,121" fill="#F4C430" opacity=".9"/><line x1="-42" y1="121" x2="-42" y2="123" stroke="#F4C430" stroke-width="1.8" stroke-dasharray="4,3"/><rect x="-60" y="123" width="36" height="22" rx="5" fill="#FFFDE7" stroke="#F4A228" stroke-width="1.8" stroke-dasharray="4,3"/><text x="-42" y="138" text-anchor="middle" font-size="11.0" fill="#B8860B" font-weight="700">LA</text><line x1="-42" y1="145" x2="-42" y2="165" stroke="#F4C430" stroke-width="1.8" stroke-dasharray="4,3"/><line x1="-56" y1="165" x2="-28" y2="165" stroke="#F4C430" stroke-width="2.4"/><line x1="-52" y1="171" x2="-32" y2="171" stroke="#F4C430" stroke-width="1.8"/><line x1="-48" y1="177" x2="-36" y2="177" stroke="#F4C430" stroke-width="1.2"/><text x="-42" y="189" text-anchor="middle" font-size="9.0" fill="#B8860B" font-weight="700">LA Earth Pit</text>'+
+  strings+
+  '<rect x="243" y="95" width="106" height="160" rx="10" fill="#FFF3DC" stroke="#F4A228" stroke-width="2" filter="url(#sh)"/><text x="296" y="115" text-anchor="middle" font-weight="700" font-size="13.8" fill="#B07A00">DCDB</text><rect x="255" y="118" width="82" height="28" rx="4" fill="#fff" stroke="#F4A228" stroke-width="1.2"/><text x="296" y="129" text-anchor="middle" font-size="9.4" fill="#1A3A5C">DC SPD 1000V</text><text x="296" y="141" text-anchor="middle" font-size="9.4" fill="#1A3A5C">Type 2</text><rect x="255" y="152" width="82" height="17" rx="4" fill="#fff" stroke="#F4A228" stroke-width="1.2"/><text x="296" y="164" text-anchor="middle" font-size="10.6" fill="#1A3A5C">Fuse</text><rect x="255" y="175" width="82" height="17" rx="4" fill="#fff" stroke="#F4A228" stroke-width="1.2"/><text x="296" y="187" text-anchor="middle" font-size="10.6" fill="#1A3A5C">Isolator</text><line x1="349" y1="175" x2="424" y2="175" stroke="#E04545" stroke-width="2.5" marker-end="url(#ag)"/><text x="387" y="167" text-anchor="middle" font-size="10.0" fill="#B03030">DC Bus</text>'+
+  '<rect x="424" y="95" width="138" height="160" rx="12" fill="#EEF4FF" stroke="#2B5FA1" stroke-width="2.5" filter="url(#sh)"/><text x="493" y="117" text-anchor="middle" font-weight="700" font-size="15.0" fill="#1A3A5C">STRING</text><text x="493" y="133" text-anchor="middle" font-weight="700" font-size="15.0" fill="#1A3A5C">INVERTER</text><text x="493" y="151" text-anchor="middle" font-size="12.5" fill="#4A60C6">'+R.kwInv+'kW · '+R.phase+'</text><rect x="438" y="159" width="110" height="14" rx="4" fill="#2B5FA1" opacity=".12"/><text x="493" y="170" text-anchor="middle" font-size="10.6" fill="#2B5FA1">DC→AC · MPPT</text><rect x="438" y="178" width="110" height="14" rx="4" fill="#2B5FA1" opacity=".08"/><text x="493" y="189" text-anchor="middle" font-size="10.6" fill="#1A3A5C">Wi-Fi Monitoring</text><line x1="562" y1="175" x2="637" y2="175" stroke="#FF69B4" stroke-width="2.5" marker-end="url(#ar)"/><text x="600" y="167" text-anchor="middle" font-size="10.0" fill="#FF69B4">AC Bus</text>'+
+  '<rect x="637" y="95" width="106" height="160" rx="10" fill="#FFF0F5" stroke="#FF69B4" stroke-width="2" filter="url(#sh)"/><text x="690" y="115" text-anchor="middle" font-weight="700" font-size="13.8" fill="#B03030">ACDB</text><rect x="649" y="120" width="82" height="17" rx="4" fill="#fff" stroke="#FF69B4" stroke-width="1.2"/><text x="690" y="132" text-anchor="middle" font-size="9.4" fill="#1A3A5C">'+R.spdAC+'</text><rect x="649" y="143" width="82" height="17" rx="4" fill="#fff" stroke="#FF69B4" stroke-width="1.2"/><text x="690" y="155" text-anchor="middle" font-size="10.6" fill="#1A3A5C">MCB</text><line x1="743" y1="175" x2="818" y2="175" stroke="#FF69B4" stroke-width="2.5" marker-end="url(#ar)"/><text x="781" y="167" text-anchor="middle" font-size="10.0" fill="#FF69B4">AC Bus</text>'+
+  '<rect x="818" y="95" width="122" height="160" rx="12" fill="#E6F4EC" stroke="#2E7D52" stroke-width="3" filter="url(#sh)"/><text x="879" y="119" text-anchor="middle" font-weight="700" font-size="13.0" fill="#2E7D52">MAIN</text><text x="879" y="134" text-anchor="middle" font-weight="700" font-size="13.0" fill="#2E7D52">Electrical</text><text x="879" y="149" text-anchor="middle" font-weight="700" font-size="13.0" fill="#2E7D52">Panel</text><text x="879" y="163" text-anchor="middle" font-size="9.0" fill="#1A3A5C">Bi-directional Digital Meter</text><text x="879" y="175" text-anchor="middle" font-size="8.5" fill="#555">under Net-metering policy</text><circle cx="940" cy="205" r="3" fill="#2E7D52"/><line x1="940" y1="205" x2="964" y2="205" stroke="#2E7D52" stroke-width="1.8" stroke-dasharray="4,3"/><line x1="964" y1="205" x2="964" y2="245" stroke="#2E7D52" stroke-width="1.8" stroke-dasharray="4,3"/><line x1="948" y1="245" x2="980" y2="245" stroke="#2E7D52" stroke-width="2.2"/><line x1="952" y1="251" x2="976" y2="251" stroke="#2E7D52" stroke-width="1.6"/><line x1="956" y1="257" x2="972" y2="257" stroke="#2E7D52" stroke-width="1"/><text x="964" y="270" text-anchor="middle" font-size="9.4" fill="#2E7D52" font-weight="700">AC Earthing</text><line x1="943" y1="175" x2="1012" y2="175" stroke="#1A3A5C" stroke-width="2.5"/><polygon points="943,171 935,175 943,179" fill="#1A3A5C"/><polygon points="1012,171 1020,175 1012,179" fill="#1A3A5C"/><text x="977" y="167" text-anchor="middle" font-size="10.0" fill="#1A3A5C" font-weight="700">Bi-directional</text>'+
+  '<rect x="1015" y="105" width="100" height="140" rx="10" fill="#1A3A5C" filter="url(#sh)"/><line x1="1065" y1="120" x2="1065" y2="190" stroke="#B8D0F0" stroke-width="2"/><line x1="1045" y1="134" x2="1085" y2="134" stroke="#B8D0F0" stroke-width="2"/><line x1="1051" y1="148" x2="1079" y2="148" stroke="#B8D0F0" stroke-width="1.5"/><line x1="1045" y1="134" x2="1065" y2="120" stroke="#B8D0F0" stroke-width="1.5"/><line x1="1085" y1="134" x2="1065" y2="120" stroke="#B8D0F0" stroke-width="1.5"/><line x1="1045" y1="134" x2="1051" y2="148" stroke="#B8D0F0" stroke-width="1.2"/><line x1="1085" y1="134" x2="1079" y2="148" stroke="#B8D0F0" stroke-width="1.2"/><line x1="1051" y1="148" x2="1045" y2="190" stroke="#B8D0F0" stroke-width="1.5"/><line x1="1079" y1="148" x2="1085" y2="190" stroke="#B8D0F0" stroke-width="1.5"/><circle cx="1045" cy="134" r="3" fill="#F4C430"/><circle cx="1085" cy="134" r="3" fill="#F4C430"/><circle cx="1051" cy="148" r="3" fill="#F4C430"/><circle cx="1079" cy="148" r="3" fill="#F4C430"/><text x="1065" y="220" text-anchor="middle" font-size="13.8" fill="#fff" font-weight="700">Grid</text>'+
+  '<line x1="879" y1="255" x2="879" y2="287" stroke="#555" stroke-width="2"/><polygon points="872,281 879,293 886,281" fill="#555"/><rect x="839" y="295" width="80" height="40" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/><text x="879" y="311" text-anchor="middle" font-size="11.9" fill="#1A3A5C" font-weight="700">LOAD</text><text x="879" y="325" text-anchor="middle" font-size="10.0" fill="#94a3b8">Home / Building</text>'+
+  '<rect x="-72" y="'+LY+'" width="1310" height="52" rx="10" fill="#f8fafc" stroke="#e2e8f0"/><text x="-52" y="'+(LY+18)+'" font-size="10.0" font-weight="700" fill="#1A3A5C">LEGEND</text><line x1="8" y1="'+(LY+28)+'" x2="46" y2="'+(LY+28)+'" stroke="#E04545" stroke-width="2.5"/><text x="50" y="'+(LY+32)+'" font-size="9.5" fill="#444">DC Cable</text><line x1="148" y1="'+(LY+28)+'" x2="186" y2="'+(LY+28)+'" stroke="#FF69B4" stroke-width="2.5"/><text x="190" y="'+(LY+32)+'" font-size="9.5" fill="#444">AC Cable</text><line x1="288" y1="'+(LY+28)+'" x2="326" y2="'+(LY+28)+'" stroke="#2E7D52" stroke-width="1.8" stroke-dasharray="5,3"/><text x="330" y="'+(LY+32)+'" font-size="9.5" fill="#444">Earthing</text><line x1="428" y1="'+(LY+28)+'" x2="466" y2="'+(LY+28)+'" stroke="#F4C430" stroke-width="1.8" stroke-dasharray="4,3"/><text x="470" y="'+(LY+32)+'" font-size="9.5" fill="#444">LA Earthing</text><line x1="568" y1="'+(LY+28)+'" x2="608" y2="'+(LY+28)+'" stroke="#1A3A5C" stroke-width="2.5"/><polygon points="568,'+(LY+24)+' 560,'+(LY+28)+' 568,'+(LY+32)+'" fill="#1A3A5C"/><polygon points="608,'+(LY+24)+' 616,'+(LY+28)+' 608,'+(LY+32)+'" fill="#1A3A5C"/><text x="620" y="'+(LY+32)+'" font-size="9.5" fill="#444">Bidirectional</text>'+
+  '</svg>';
+}
+
+function sldSE(){
+  var R=calcRatings(CR);
+  var LY=430;
+  return '<svg viewBox="-70 0 1350 '+(LY+70)+'" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,Calibri,sans-serif" style="width:100%;height:auto"><defs><marker id="ag" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#E04545"/></marker><marker id="ar" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#FF69B4"/></marker><marker id="ab" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#4A60C6"/></marker><filter id="sh"><feDropShadow dx="1" dy="2" stdDeviation="3" flood-opacity="0.12"/></filter></defs>'+
+  '<text x="-42" y="82" text-anchor="middle" font-size="9.0" fill="#B8860B" font-weight="700">Lightning</text><text x="-42" y="93" text-anchor="middle" font-size="9.0" fill="#B8860B" font-weight="700">Arrester (LA)</text><polygon points="-52,121 -42,107 -32,121" fill="#F4C430" opacity=".9"/><line x1="-42" y1="121" x2="-42" y2="123" stroke="#F4C430" stroke-width="1.8" stroke-dasharray="4,3"/><rect x="-60" y="123" width="36" height="22" rx="5" fill="#FFFDE7" stroke="#F4A228" stroke-width="1.8" stroke-dasharray="4,3"/><text x="-42" y="138" text-anchor="middle" font-size="11.0" fill="#B8860B" font-weight="700">LA</text><line x1="-42" y1="145" x2="-42" y2="165" stroke="#F4C430" stroke-width="1.8" stroke-dasharray="4,3"/><line x1="-56" y1="165" x2="-28" y2="165" stroke="#F4C430" stroke-width="2.4"/><line x1="-52" y1="171" x2="-32" y2="171" stroke="#F4C430" stroke-width="1.8"/><line x1="-48" y1="177" x2="-36" y2="177" stroke="#F4C430" stroke-width="1.2"/><text x="-42" y="189" text-anchor="middle" font-size="9.0" fill="#B8860B" font-weight="700">LA Earth Pit</text>'+
+  '<rect x="30" y="95" width="178" height="160" rx="10" fill="#E6F4EC" stroke="#2E7D52" stroke-width="2" filter="url(#sh)"/><text x="119" y="113" text-anchor="middle" font-weight="700" font-size="11" fill="#2E7D52">PANEL ARRAY</text><rect x="44" y="123" width="13" height="28" rx="2" fill="#2B5FA1" stroke="#1A3A5C" stroke-width=".5"/><rect x="43" y="154" width="15" height="12" rx="2" fill="#B07A00" stroke="#F4A228" stroke-width="1"/><text x="50" y="163" text-anchor="middle" font-size="7" fill="#fff" font-weight="700">OPT</text><text x="50" y="175" text-anchor="middle" font-size="7.5" fill="#1A3A5C" font-weight="700">1</text><circle cx="82" cy="137" r="2" fill="#2B5FA1" opacity=".6"/><circle cx="96" cy="137" r="2" fill="#2B5FA1" opacity=".6"/><circle cx="110" cy="137" r="2" fill="#2B5FA1" opacity=".6"/><circle cx="124" cy="137" r="2" fill="#2B5FA1" opacity=".6"/><circle cx="138" cy="137" r="2" fill="#2B5FA1" opacity=".6"/><rect x="160" y="123" width="13" height="28" rx="2" fill="#2B5FA1" stroke="#1A3A5C" stroke-width=".5"/><rect x="159" y="154" width="15" height="12" rx="2" fill="#B07A00" stroke="#F4A228" stroke-width="1"/><text x="166" y="163" text-anchor="middle" font-size="7" fill="#fff" font-weight="700">OPT</text><text x="166" y="175" text-anchor="middle" font-size="7.5" fill="#1A3A5C" font-weight="700">'+CR.panels+'</text><text x="119" y="197" text-anchor="middle" font-size="9" fill="#1A3A5C" font-weight="600">'+CR.panels+'×545Wp='+(CR.panels*545/1000).toFixed(2)+'kWp</text><text x="119" y="210" text-anchor="middle" font-size="8" fill="#8A8FA8">+ SE P600/P800</text><line x1="119" y1="255" x2="119" y2="277" stroke="#2E7D52" stroke-width="1.5" stroke-dasharray="4,3"/><line x1="103" y1="277" x2="135" y2="277" stroke="#2E7D52" stroke-width="2.2"/><line x1="107" y1="283" x2="131" y2="283" stroke="#2E7D52" stroke-width="1.6"/><line x1="111" y1="289" x2="127" y2="289" stroke="#2E7D52" stroke-width="1"/><text x="119" y="301" text-anchor="middle" font-size="7.5" fill="#2E7D52" font-weight="700">Structure Earthing</text><line x1="208" y1="175" x2="283" y2="175" stroke="#E04545" stroke-width="2" marker-end="url(#ag)"/><text x="246" y="167" text-anchor="middle" font-size="8" fill="#B03030">Opt. DC</text>'+
+  '<rect x="283" y="95" width="106" height="160" rx="10" fill="#FFF3DC" stroke="#F4A228" stroke-width="2" filter="url(#sh)"/><text x="336" y="115" text-anchor="middle" font-weight="700" font-size="11" fill="#B07A00">DCDB</text><rect x="295" y="125" width="82" height="15" rx="4" fill="#fff" stroke="#F4A228" stroke-width="1.2"/><text x="336" y="137" text-anchor="middle" font-size="8.5" fill="#1A3A5C">'+R.spdDC+'</text><rect x="295" y="145" width="82" height="15" rx="4" fill="#fff" stroke="#F4A228" stroke-width="1.2"/><text x="336" y="157" text-anchor="middle" font-size="8.5" fill="#1A3A5C">Fuse '+R.dcFuse+'A/str</text><rect x="295" y="165" width="82" height="15" rx="4" fill="#fff" stroke="#F4A228" stroke-width="1.2"/><text x="336" y="177" text-anchor="middle" font-size="8.5" fill="#1A3A5C">Isolator '+R.dcIsol+'A</text><line x1="389" y1="175" x2="464" y2="175" stroke="#E04545" stroke-width="2.5" marker-end="url(#ag)"/><text x="427" y="167" text-anchor="middle" font-size="8" fill="#B03030">DC Bus</text>'+
+  '<rect x="464" y="95" width="148" height="160" rx="12" fill="#FFF8E1" stroke="#F4A228" stroke-width="2.5" filter="url(#sh)"/><text x="538" y="117" text-anchor="middle" font-weight="700" font-size="11" fill="#B07A00">SolarEdge</text><text x="538" y="133" text-anchor="middle" font-weight="700" font-size="11" fill="#1A3A5C">HD-WAVE INV</text><text x="538" y="149" text-anchor="middle" font-size="9" fill="#B07A00">'+R.kwInv+'kW · '+R.phase+'</text><rect x="476" y="157" width="124" height="14" rx="4" fill="#F4A228" opacity=".15"/><text x="538" y="168" text-anchor="middle" font-size="8.5" fill="#1A3A5C">Panel-Level MPPT</text><rect x="476" y="176" width="124" height="14" rx="4" fill="#F4A228" opacity=".08"/><text x="538" y="187" text-anchor="middle" font-size="8.5" fill="#1A3A5C">Cloud Monitoring</text><line x1="612" y1="175" x2="687" y2="175" stroke="#FF69B4" stroke-width="2.5" marker-end="url(#ar)"/><text x="650" y="167" text-anchor="middle" font-size="8" fill="#FF69B4">AC '+R.phase+'</text>'+
+  '<rect x="464" y="278" width="148" height="52" rx="10" fill="#EEF4FF" stroke="#4A60C6" stroke-width="1.5" filter="url(#sh)"/><text x="538" y="299" text-anchor="middle" font-size="13">☁️</text><text x="538" y="317" text-anchor="middle" font-weight="700" font-size="9.5" fill="#4A60C6">SolarEdge Cloud</text><line x1="538" y1="255" x2="538" y2="278" stroke="#4A60C6" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#ab)"/>'+
+  '<rect x="687" y="95" width="108" height="160" rx="10" fill="#FFF0F5" stroke="#FF69B4" stroke-width="2" filter="url(#sh)"/><text x="741" y="115" text-anchor="middle" font-weight="700" font-size="11" fill="#B03030">ACDB</text><rect x="699" y="125" width="84" height="15" rx="4" fill="#fff" stroke="#FF69B4" stroke-width="1.2"/><text x="741" y="137" text-anchor="middle" font-size="8.5" fill="#1A3A5C">SPD '+R.spdAC+'</text><rect x="699" y="145" width="84" height="15" rx="4" fill="#fff" stroke="#FF69B4" stroke-width="1.2"/><text x="741" y="157" text-anchor="middle" font-size="8.5" fill="#1A3A5C">MCB '+R.mcb+'A 4P</text><rect x="699" y="165" width="84" height="15" rx="4" fill="#fff" stroke="#FF69B4" stroke-width="1.2"/><text x="741" y="177" text-anchor="middle" font-size="8.5" fill="#1A3A5C">Aux Contact</text><rect x="699" y="185" width="84" height="15" rx="4" fill="#fff" stroke="#FF69B4" stroke-width="1.2"/><text x="741" y="197" text-anchor="middle" font-size="8.5" fill="#1A3A5C">AJB Isolator</text><line x1="795" y1="175" x2="870" y2="175" stroke="#FF69B4" stroke-width="2.5" marker-end="url(#ar)"/><text x="833" y="167" text-anchor="middle" font-size="8" fill="#FF69B4">'+R.acCable+'</text>'+
+  '<rect x="870" y="95" width="122" height="160" rx="12" fill="#E6F4EC" stroke="#2E7D52" stroke-width="3" filter="url(#sh)"/><text x="931" y="119" text-anchor="middle" font-weight="700" font-size="12" fill="#2E7D52">MAIN</text><text x="931" y="135" text-anchor="middle" font-weight="700" font-size="12" fill="#2E7D52">METER</text><text x="931" y="151" text-anchor="middle" font-size="9" fill="#1A3A5C">(Bidirectional)</text><text x="931" y="165" text-anchor="middle" font-size="8" fill="#555">Net Metering</text><text x="931" y="179" text-anchor="middle" font-size="8" fill="#94a3b8">BESCOM · Digital</text><circle cx="992" cy="210" r="3" fill="#2E7D52"/><line x1="992" y1="210" x2="1020" y2="210" stroke="#2E7D52" stroke-width="1.8" stroke-dasharray="4,3"/><line x1="1020" y1="210" x2="1020" y2="250" stroke="#2E7D52" stroke-width="1.8" stroke-dasharray="4,3"/><line x1="1004" y1="250" x2="1036" y2="250" stroke="#2E7D52" stroke-width="2.2"/><line x1="1008" y1="256" x2="1032" y2="256" stroke="#2E7D52" stroke-width="1.6"/><line x1="1012" y1="262" x2="1028" y2="262" stroke="#2E7D52" stroke-width="1"/><text x="1020" y="275" text-anchor="middle" font-size="7.5" fill="#2E7D52" font-weight="700">AC Earthing</text><line x1="995" y1="175" x2="1064" y2="175" stroke="#1A3A5C" stroke-width="2.5"/><polygon points="995,171 987,175 995,179" fill="#1A3A5C"/><polygon points="1064,171 1072,175 1064,179" fill="#1A3A5C"/><text x="1029" y="167" text-anchor="middle" font-size="8" fill="#1A3A5C" font-weight="700">Bi-directional</text>'+
+  '<rect x="1067" y="105" width="100" height="140" rx="10" fill="#1A3A5C" filter="url(#sh)"/><line x1="1117" y1="120" x2="1117" y2="190" stroke="#B8D0F0" stroke-width="2"/><line x1="1097" y1="134" x2="1137" y2="134" stroke="#B8D0F0" stroke-width="2"/><line x1="1103" y1="148" x2="1131" y2="148" stroke="#B8D0F0" stroke-width="1.5"/><line x1="1097" y1="134" x2="1117" y2="120" stroke="#B8D0F0" stroke-width="1.5"/><line x1="1137" y1="134" x2="1117" y2="120" stroke="#B8D0F0" stroke-width="1.5"/><line x1="1097" y1="134" x2="1103" y2="148" stroke="#B8D0F0" stroke-width="1.2"/><line x1="1137" y1="134" x2="1131" y2="148" stroke="#B8D0F0" stroke-width="1.2"/><line x1="1103" y1="148" x2="1097" y2="190" stroke="#B8D0F0" stroke-width="1.5"/><line x1="1131" y1="148" x2="1137" y2="190" stroke="#B8D0F0" stroke-width="1.5"/><circle cx="1097" cy="134" r="3" fill="#F4C430"/><circle cx="1137" cy="134" r="3" fill="#F4C430"/><circle cx="1103" cy="148" r="3" fill="#F4C430"/><circle cx="1131" cy="148" r="3" fill="#F4C430"/><text x="1117" y="220" text-anchor="middle" font-size="13.8" fill="#fff" font-weight="700">Grid</text>'+
+  '<line x1="931" y1="255" x2="931" y2="287" stroke="#555" stroke-width="2"/><polygon points="924,281 931,293 938,281" fill="#555"/><rect x="891" y="295" width="80" height="40" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/><text x="931" y="311" text-anchor="middle" font-size="9.5" fill="#1A3A5C" font-weight="700">LOAD</text><text x="931" y="325" text-anchor="middle" font-size="8" fill="#94a3b8">Home / Building</text>'+
+  '<rect x="-72" y="'+LY+'" width="1350" height="52" rx="10" fill="#f8fafc" stroke="#e2e8f0"/><text x="-52" y="'+(LY+18)+'" font-size="10.0" font-weight="700" fill="#1A3A5C">LEGEND</text><line x1="8" y1="'+(LY+28)+'" x2="46" y2="'+(LY+28)+'" stroke="#E04545" stroke-width="2.5"/><text x="50" y="'+(LY+32)+'" font-size="9.5" fill="#444">DC Cable</text><line x1="148" y1="'+(LY+28)+'" x2="186" y2="'+(LY+28)+'" stroke="#FF69B4" stroke-width="2.5"/><text x="190" y="'+(LY+32)+'" font-size="9.5" fill="#444">AC Cable</text><line x1="288" y1="'+(LY+28)+'" x2="326" y2="'+(LY+28)+'" stroke="#2E7D52" stroke-width="1.8" stroke-dasharray="5,3"/><text x="330" y="'+(LY+32)+'" font-size="9.5" fill="#444">Earthing</text><line x1="428" y1="'+(LY+28)+'" x2="466" y2="'+(LY+28)+'" stroke="#F4C430" stroke-width="1.8" stroke-dasharray="4,3"/><text x="470" y="'+(LY+32)+'" font-size="9.5" fill="#444">LA Earthing</text><line x1="568" y1="'+(LY+28)+'" x2="608" y2="'+(LY+28)+'" stroke="#1A3A5C" stroke-width="2.5"/><polygon points="568,'+(LY+24)+' 560,'+(LY+28)+' 568,'+(LY+32)+'" fill="#1A3A5C"/><polygon points="608,'+(LY+24)+' 616,'+(LY+28)+' 608,'+(LY+32)+'" fill="#1A3A5C"/><text x="620" y="'+(LY+32)+'" font-size="9.5" fill="#444">Bidirectional</text><line x1="720" y1="'+(LY+28)+'" x2="758" y2="'+(LY+28)+'" stroke="#4A60C6" stroke-width="1.8" stroke-dasharray="4,3"/><text x="762" y="'+(LY+32)+'" font-size="9.5" fill="#444">Cloud/Wi-Fi</text>'+
+  '</svg>';
+}
+
+function sldEN(){
+  var R=calcRatings(CR);
+  var LY=430;
+  return '<svg viewBox="-70 0 960 '+(LY+70)+'" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,Calibri,sans-serif" style="width:100%;height:auto"><defs><marker id="ar" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#FF69B4"/></marker><marker id="ab" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#4A60C6"/></marker><filter id="sh"><feDropShadow dx="1" dy="2" stdDeviation="3" flood-opacity="0.12"/></filter></defs>'+
+  '<text x="-42" y="82" text-anchor="middle" font-size="9.0" fill="#B8860B" font-weight="700">Lightning</text><text x="-42" y="93" text-anchor="middle" font-size="9.0" fill="#B8860B" font-weight="700">Arrester (LA)</text><polygon points="-52,121 -42,107 -32,121" fill="#F4C430" opacity=".9"/><line x1="-42" y1="121" x2="-42" y2="123" stroke="#F4C430" stroke-width="1.8" stroke-dasharray="4,3"/><rect x="-60" y="123" width="36" height="22" rx="5" fill="#FFFDE7" stroke="#F4A228" stroke-width="1.8" stroke-dasharray="4,3"/><text x="-42" y="138" text-anchor="middle" font-size="11.0" fill="#B8860B" font-weight="700">LA</text><line x1="-42" y1="145" x2="-42" y2="165" stroke="#F4C430" stroke-width="1.8" stroke-dasharray="4,3"/><line x1="-56" y1="165" x2="-28" y2="165" stroke="#F4C430" stroke-width="2.4"/><line x1="-52" y1="171" x2="-32" y2="171" stroke="#F4C430" stroke-width="1.8"/><line x1="-48" y1="177" x2="-36" y2="177" stroke="#F4C430" stroke-width="1.2"/><text x="-42" y="189" text-anchor="middle" font-size="9.0" fill="#B8860B" font-weight="700">LA Earth Pit</text>'+
+  '<rect x="30" y="95" width="195" height="160" rx="10" fill="#E6F4EC" stroke="#2E7D52" stroke-width="2" filter="url(#sh)"/><text x="128" y="113" text-anchor="middle" font-weight="700" font-size="11" fill="#2E7D52">PANEL ARRAY</text><rect x="44" y="123" width="13" height="28" rx="2" fill="#2B5FA1" stroke="#1A3A5C" stroke-width=".5"/><rect x="43" y="154" width="15" height="13" rx="3" fill="#E04545" stroke="#B03030" stroke-width="1"/><text x="50" y="164" text-anchor="middle" font-size="7" fill="#fff" font-weight="700">IQ8</text><circle cx="82" cy="137" r="2" fill="#2B5FA1" opacity=".6"/><circle cx="96" cy="137" r="2" fill="#2B5FA1" opacity=".6"/><circle cx="110" cy="137" r="2" fill="#2B5FA1" opacity=".6"/><circle cx="124" cy="137" r="2" fill="#2B5FA1" opacity=".6"/><circle cx="138" cy="137" r="2" fill="#2B5FA1" opacity=".6"/><rect x="158" y="123" width="13" height="28" rx="2" fill="#2B5FA1" stroke="#1A3A5C" stroke-width=".5"/><rect x="157" y="154" width="15" height="13" rx="3" fill="#E04545" stroke="#B03030" stroke-width="1"/><text x="164" y="164" text-anchor="middle" font-size="7" fill="#fff" font-weight="700">IQ8</text><text x="50" y="177" text-anchor="middle" font-size="7.5" fill="#1A3A5C" font-weight="700">1</text><text x="164" y="177" text-anchor="middle" font-size="7.5" fill="#1A3A5C" font-weight="700">'+CR.panels+'</text><text x="128" y="197" text-anchor="middle" font-size="9" fill="#1A3A5C" font-weight="600">'+CR.panels+'×545Wp='+(CR.panels*545/1000).toFixed(2)+'kWp</text><text x="128" y="211" text-anchor="middle" font-size="8" fill="#E04545">AC output per panel</text><line x1="128" y1="255" x2="128" y2="277" stroke="#2E7D52" stroke-width="1.5" stroke-dasharray="4,3"/><line x1="112" y1="277" x2="144" y2="277" stroke="#2E7D52" stroke-width="2.2"/><line x1="116" y1="283" x2="140" y2="283" stroke="#2E7D52" stroke-width="1.6"/><line x1="120" y1="289" x2="136" y2="289" stroke="#2E7D52" stroke-width="1"/><text x="128" y="301" text-anchor="middle" font-size="7.5" fill="#2E7D52" font-weight="700">Structure Earthing</text><line x1="225" y1="175" x2="300" y2="175" stroke="#FF69B4" stroke-width="2.5" marker-end="url(#ar)"/><text x="263" y="167" text-anchor="middle" font-size="8" fill="#FF69B4">AC Trunk</text>'+
+  '<rect x="300" y="95" width="140" height="160" rx="10" fill="#FFF0F5" stroke="#FF69B4" stroke-width="2" filter="url(#sh)"/><text x="370" y="113" text-anchor="middle" font-weight="700" font-size="10" fill="#B03030">IQ COMBINER</text><text x="370" y="126" text-anchor="middle" font-size="8.5" fill="#B03030">+ Q RELAY + ACDB</text><rect x="312" y="133" width="116" height="15" rx="4" fill="#fff" stroke="#FF69B4" stroke-width="1"/><text x="370" y="144" text-anchor="middle" font-size="8" fill="#1A3A5C">IQ Envoy Gateway</text><rect x="312" y="152" width="116" height="15" rx="4" fill="#fff" stroke="#FF69B4" stroke-width="1"/><text x="370" y="163" text-anchor="middle" font-size="8" fill="#1A3A5C">SPD '+R.spdAC+'</text><rect x="312" y="171" width="116" height="15" rx="4" fill="#fff" stroke="#FF69B4" stroke-width="1"/><text x="370" y="182" text-anchor="middle" font-size="8" fill="#1A3A5C">MCB '+R.mcb+'A 4P</text><rect x="312" y="190" width="116" height="15" rx="4" fill="#fff" stroke="#FF69B4" stroke-width="1"/><text x="370" y="201" text-anchor="middle" font-size="8" fill="#1A3A5C">Grid Profile · CT Clamps</text><line x1="440" y1="175" x2="515" y2="175" stroke="#FF69B4" stroke-width="2.5" marker-end="url(#ar)"/><text x="478" y="167" text-anchor="middle" font-size="8" fill="#FF69B4">'+R.acCable+'</text>'+
+  '<rect x="295" y="278" width="150" height="52" rx="10" fill="#EEF4FF" stroke="#4A60C6" stroke-width="1.5" filter="url(#sh)"/><text x="370" y="299" text-anchor="middle" font-size="13">☁️</text><text x="370" y="317" text-anchor="middle" font-weight="700" font-size="9.5" fill="#4A60C6">Enphase Enlighten</text><line x1="370" y1="255" x2="370" y2="278" stroke="#4A60C6" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#ab)"/><text x="395" y="270" font-size="7.5" fill="#4A60C6">Wi-Fi</text>'+
+  '<rect x="515" y="95" width="140" height="160" rx="12" fill="#E6F4EC" stroke="#2E7D52" stroke-width="3" filter="url(#sh)"/><text x="585" y="119" text-anchor="middle" font-weight="700" font-size="12" fill="#2E7D52">MAIN</text><text x="585" y="135" text-anchor="middle" font-weight="700" font-size="12" fill="#2E7D52">METER</text><text x="585" y="151" text-anchor="middle" font-size="9" fill="#1A3A5C">(Bidirectional)</text><text x="585" y="165" text-anchor="middle" font-size="8" fill="#555">Net Metering</text><text x="585" y="179" text-anchor="middle" font-size="8" fill="#94a3b8">BESCOM · Envoy CT</text><circle cx="655" cy="210" r="3" fill="#2E7D52"/><line x1="655" y1="210" x2="680" y2="210" stroke="#2E7D52" stroke-width="1.8" stroke-dasharray="4,3"/><line x1="680" y1="210" x2="680" y2="250" stroke="#2E7D52" stroke-width="1.8" stroke-dasharray="4,3"/><line x1="664" y1="250" x2="696" y2="250" stroke="#2E7D52" stroke-width="2.2"/><line x1="668" y1="256" x2="692" y2="256" stroke="#2E7D52" stroke-width="1.6"/><line x1="672" y1="262" x2="688" y2="262" stroke="#2E7D52" stroke-width="1"/><text x="680" y="275" text-anchor="middle" font-size="7.5" fill="#2E7D52" font-weight="700">AC Earthing</text><line x1="658" y1="175" x2="727" y2="175" stroke="#1A3A5C" stroke-width="2.5"/><polygon points="658,171 650,175 658,179" fill="#1A3A5C"/><polygon points="727,171 735,175 727,179" fill="#1A3A5C"/><text x="692" y="167" text-anchor="middle" font-size="8" fill="#1A3A5C" font-weight="700">Bi-directional</text>'+
+  '<rect x="730" y="105" width="100" height="140" rx="10" fill="#1A3A5C" filter="url(#sh)"/><line x1="780" y1="120" x2="780" y2="190" stroke="#B8D0F0" stroke-width="2"/><line x1="760" y1="134" x2="800" y2="134" stroke="#B8D0F0" stroke-width="2"/><line x1="766" y1="148" x2="794" y2="148" stroke="#B8D0F0" stroke-width="1.5"/><line x1="760" y1="134" x2="780" y2="120" stroke="#B8D0F0" stroke-width="1.5"/><line x1="800" y1="134" x2="780" y2="120" stroke="#B8D0F0" stroke-width="1.5"/><line x1="760" y1="134" x2="766" y2="148" stroke="#B8D0F0" stroke-width="1.2"/><line x1="800" y1="134" x2="794" y2="148" stroke="#B8D0F0" stroke-width="1.2"/><line x1="766" y1="148" x2="760" y2="190" stroke="#B8D0F0" stroke-width="1.5"/><line x1="794" y1="148" x2="800" y2="190" stroke="#B8D0F0" stroke-width="1.5"/><circle cx="760" cy="134" r="3" fill="#F4C430"/><circle cx="800" cy="134" r="3" fill="#F4C430"/><circle cx="766" cy="148" r="3" fill="#F4C430"/><circle cx="794" cy="148" r="3" fill="#F4C430"/><text x="780" y="220" text-anchor="middle" font-size="13.8" fill="#fff" font-weight="700">Grid</text>'+
+  '<line x1="585" y1="255" x2="585" y2="287" stroke="#555" stroke-width="2"/><polygon points="578,281 585,293 592,281" fill="#555"/><rect x="545" y="295" width="80" height="40" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/><text x="585" y="311" text-anchor="middle" font-size="9.5" fill="#1A3A5C" font-weight="700">LOAD</text><text x="585" y="325" text-anchor="middle" font-size="8" fill="#94a3b8">Home / Building</text>'+
+  '<rect x="-72" y="'+LY+'" width="960" height="52" rx="10" fill="#f8fafc" stroke="#e2e8f0"/><text x="-52" y="'+(LY+18)+'" font-size="10.0" font-weight="700" fill="#1A3A5C">LEGEND</text><line x1="8" y1="'+(LY+28)+'" x2="46" y2="'+(LY+28)+'" stroke="#FF69B4" stroke-width="2.5"/><text x="50" y="'+(LY+32)+'" font-size="9.5" fill="#444">AC Cable</text><line x1="148" y1="'+(LY+28)+'" x2="186" y2="'+(LY+28)+'" stroke="#2E7D52" stroke-width="1.8" stroke-dasharray="5,3"/><text x="190" y="'+(LY+32)+'" font-size="9.5" fill="#444">Earthing</text><line x1="288" y1="'+(LY+28)+'" x2="326" y2="'+(LY+28)+'" stroke="#F4C430" stroke-width="1.8" stroke-dasharray="4,3"/><text x="330" y="'+(LY+32)+'" font-size="9.5" fill="#444">LA Earthing</text><line x1="428" y1="'+(LY+28)+'" x2="468" y2="'+(LY+28)+'" stroke="#4A60C6" stroke-width="1.8" stroke-dasharray="4,3"/><text x="472" y="'+(LY+32)+'" font-size="9.5" fill="#444">Cloud/Wi-Fi</text><line x1="568" y1="'+(LY+28)+'" x2="608" y2="'+(LY+28)+'" stroke="#1A3A5C" stroke-width="2.5"/><polygon points="568,'+(LY+24)+' 560,'+(LY+28)+' 568,'+(LY+32)+'" fill="#1A3A5C"/><polygon points="608,'+(LY+24)+' 616,'+(LY+28)+' 608,'+(LY+32)+'" fill="#1A3A5C"/><text x="620" y="'+(LY+32)+'" font-size="9.5" fill="#444">Bidirectional</text><rect x="720" y="'+(LY+22)+'" width="13" height="13" rx="2" fill="#FF69B4"/><text x="737" y="'+(LY+32)+'" font-size="9.5" fill="#444">IQ8</text>'+
+  '</svg>';
+}
+
+renderBOM();
+</script>
+</body>
+</html>
