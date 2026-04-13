@@ -308,7 +308,7 @@
           <!-- Monthly Bill -->
           <div>
             <div class="input-label">
-              Monthly Electricity Bill (₹) <span style="color:#e53e3e;font-size:.8rem">*</span>
+              Monthly Electricity Bill (₹) <span id="bill-asterisk" style="color:#e53e3e;font-size:.8rem">*</span>
               <span class="tooltip-wrap"><i class="ri-information-line" style="color:#94a3b8;cursor:help;font-size:.9rem"></i><span class="tip">Average monthly electricity bill amount. Used to estimate your ideal solar system size.</span></span>
             </div>
             <div class="custom-input" id="ci-bill">
@@ -322,12 +322,12 @@
           <!-- % of Bill -->
           <div>
             <div class="input-label">
-              % of Bill to Slash <span style="color:#e53e3e;font-size:.8rem">*</span>
+              % of Bill to Slash <span id="pct-asterisk" style="color:#e53e3e;font-size:.8rem">*</span>
               <span class="tooltip-wrap"><i class="ri-information-line" style="color:#94a3b8;cursor:help;font-size:.9rem"></i><span class="tip">What % of your electricity bill should solar offset? 100% means full offset of the bill.</span></span>
             </div>
             <div class="custom-input" id="ci-pct">
               <div class="icon-box icon-pct"><i class="ri-percent-fill"></i></div>
-              <input type="number" id="billOffset" placeholder="e.g. 100" required oninput="markDirty();checkLimit(this,'ci-pct','err-pct',100,'Must be ≤ 100%')">
+              <input type="number" id="billOffset" placeholder="above 10%" min="10" max="100" required oninput="markDirty();checkLimit(this,'ci-pct','err-pct',100,'Must be between 10–100%');checkAndRevealBtn()" onblur="checkLimit(this,'ci-pct','err-pct',100,'Must be between 10–100%');checkAndRevealBtn()">
               <span class="input-suffix">%</span>
             </div>
             <div class="field-error" id="err-pct"><i class="ri-error-warning-fill"></i><span></span></div>
@@ -371,7 +371,7 @@
             </div>
             <div class="custom-input" id="ci-kwp">
               <div class="icon-box icon-kwp"><i class="ri-flashlight-line"></i></div>
-              <input type="number" id="overrideKwp" placeholder="Optional" step="0.5" oninput="markDirty();checkLimit(this,'ci-kwp','err-kwp',12,'Must be ≤ 12 kWp')">
+              <input type="number" id="overrideKwp" placeholder="Optional" step="0.5" oninput="markDirty();checkLimit(this,'ci-kwp','err-kwp',12,'Must be ≤ 12 kWp');updateBillRequired()">
               <span class="input-suffix">kWp</span>
             </div>
             <div class="field-error" id="err-kwp"><i class="ri-error-warning-fill"></i><span></span></div>
@@ -475,8 +475,17 @@ function checkLimit(el, inputId, errId, max, msg) {
   var v = parseFloat(el.value);
   var inputEl = document.getElementById(inputId);
   var errEl = document.getElementById(errId);
+  // Special: % of Bill to Slash must be 10–100; reset to 10 if out of range
+  if (inputId === 'ci-pct') {
+    if (!isNaN(v)) {
+      if (v > 100) el.value = 100;
+      else if (v < 10 && el !== document.activeElement) el.value = 10;
+    }
+    inputEl.classList.remove('error');
+    errEl.classList.remove('show');
+    return;
+  }
   if (!isNaN(v) && v > max) {
-    // Instantly reset to max
     el.value = max;
     inputEl.classList.remove('error');
     errEl.classList.remove('show');
@@ -505,16 +514,51 @@ function playPopSound(){
 
 var _btnRevealed=false;
 
+function updateBillRequired(){
+  var kwp=document.getElementById('overrideKwp').value;
+  var hasKwp = kwp && parseFloat(kwp) >= 2;
+  var billInput=document.getElementById('monthlyBill');
+  var billAsterisk=document.getElementById('bill-asterisk');
+  var pctInput=document.getElementById('billOffset');
+  var pctAsterisk=document.getElementById('pct-asterisk');
+  if(hasKwp){
+    // Bill not required
+    billInput.removeAttribute('required');
+    if(billAsterisk) billAsterisk.style.display='none';
+    document.getElementById('ci-bill').style.opacity='0.65';
+    billInput.placeholder='Optional (kWp override active)';
+    // % of Bill not required
+    pctInput.removeAttribute('required');
+    if(pctAsterisk) pctAsterisk.style.display='none';
+    document.getElementById('ci-pct').style.opacity='0.65';
+    pctInput.placeholder='Optional (kWp override active)';
+  } else {
+    // Bill required
+    billInput.setAttribute('required','required');
+    if(billAsterisk) billAsterisk.style.display='';
+    document.getElementById('ci-bill').style.opacity='1';
+    billInput.placeholder='e.g. 5000';
+    // % of Bill required
+    pctInput.setAttribute('required','required');
+    if(pctAsterisk) pctAsterisk.style.display='';
+    document.getElementById('ci-pct').style.opacity='1';
+    pctInput.placeholder='above 10%';
+  }
+  checkAndRevealBtn();
+}
+
 function checkAndRevealBtn(){
   var bill=document.getElementById('monthlyBill').value;
   var pct =document.getElementById('billOffset').value;
   var roof=document.getElementById('roofType').value;
+  var kwpOverride=document.getElementById('overrideKwp').value;
+  var hasKwp = kwpOverride && parseFloat(kwpOverride) >= 2;
   var btn =document.getElementById('calc-btn-main');
   if(!btn) return;
-  // All 3 required fields filled and not yet revealed
-  if(bill && pct && roof && !_btnRevealed){
+  // kWp override: bill AND pct NOT required. Only roof needed.
+  var ready = hasKwp ? (roof) : (bill && pct && roof);
+  if(ready && !_btnRevealed){
     _btnRevealed=true;
-    // Pop-in: reset then animate
     btn.style.transition='none';
     btn.style.opacity='0';
     btn.style.transform='scale(0.5)';
@@ -552,9 +596,11 @@ function runCalculate() {
   var bill = document.getElementById('monthlyBill').value;
   var pct  = document.getElementById('billOffset').value;
   var roof = document.getElementById('roofType').value;
+  var kwpOverride = document.getElementById('overrideKwp').value;
+  var hasKwp = kwpOverride && parseFloat(kwpOverride) >= 2;
   var msgs = [];
-  if(!bill) msgs.push('Monthly Electricity Bill');
-  if(!pct)  msgs.push('% of Bill to Slash');
+  if(!hasKwp && !bill) msgs.push('Monthly Electricity Bill');
+  if(!hasKwp && !pct)  msgs.push('% of Bill to Slash');
   if(!roof) msgs.push('Roof Type');
   if(msgs.length){
     alert('Please fill in the required fields:\n• ' + msgs.join('\n• '));
@@ -807,7 +853,7 @@ function calculate(){
   var roof=document.getElementById('roofType').value||'flat';
   var inv=document.getElementById('inverterType').value||'string';
   var sector='residential';
-  var offPct=Math.min(100,Math.max(0,parseFloat(document.getElementById('billOffset').value)||100));
+  var offPct=Math.min(100,Math.max(10,parseFloat(document.getElementById('billOffset').value)||100));
   var rooftopSqft=parseFloat(document.getElementById('rooftopSpace').value)||0;
   var sanctioned=parseFloat(document.getElementById('sanctionedLoad').value)||0;
   var clientKwp=parseFloat(document.getElementById('overrideKwp').value);
@@ -815,7 +861,7 @@ function calculate(){
 
   var wrap=document.getElementById('results-wrap');
 
-  if(!bill||bill<100){
+  if(!hasOverride && (!bill||bill<100)){
     wrap.style.display='block';
     document.getElementById('results-inner').innerHTML='<div class="empty"><div class="icon">☀️</div><p>Please enter a monthly bill to see results</p></div>';
     return;
@@ -901,29 +947,31 @@ function renderResults(r,tiers,kwp){
   var maxVal = Math.max(billAmt, r.mSav, 1000);
   var billPct = Math.min(100,(billAmt/maxVal*100)).toFixed(1);
   var savPct  = Math.min(100,(r.mSav/maxVal*100)).toFixed(1);
+  // When kWp override is used, hide the bill bar (set bill to 0)
+  var showBillBar = !r.hasOverride;
 
-  // ── Dual-bar helper: numbers inside bars ───────────────────────────────────
-  function dualBarRow(label, billVal, savVal, maxVal, billTip, savTip) {
+  // ── Dual-bar helper: swapped (green=savings on top, blue=bill below) ──────
+  function dualBarRow(label, billVal, savVal, maxVal, billTip, savTip, hideBill) {
     var bp = Math.min(97,(billVal/maxVal*100)).toFixed(1);
     var sp = Math.min(97,(savVal/maxVal*100)).toFixed(1);
     var bNum = Math.round(billVal).toLocaleString('en-IN');
     var sNum = Math.round(savVal).toLocaleString('en-IN');
-    return '<div class=\"sav-row\">'+
-      '<div class=\"sav-row-header\">'+
-        '<span class=\"sav-lbl\">'+label+'</span>'+
-        '<span class=\"sav-val-green\">'+fmt(savVal)+'</span>'+
-      '</div>'+
-      /* ── Orange bar: bill value label inside ── */
-      '<div style=\"position:relative;margin-bottom:8px\">'+
+    var billBar = hideBill ? '' :
+      '<div style=\"position:relative\">'+
         '<div class=\"sav-bar-track sav-bar-bg-orange\">'+
           '<div class=\"sav-bar-orange\" style=\"height:100%;width:'+bp+'%;border-radius:6px;transition:width 1s;display:flex;align-items:center;padding-left:10px\">'+
             '<span style=\"font-size:.72rem;font-weight:800;color:#fff;white-space:nowrap;letter-spacing:-.01em\">'+bNum+'</span>'+
             '<span class=\"sav-tip\" style=\"margin-left:4px\"><i class=\"ri-information-line\" style=\"color:rgba(255,255,255,.7);font-size:.8rem\"></i><span class=\"sav-tip-text\">'+billTip+'</span></span>'+
           '</div>'+
         '</div>'+
+      '</div>';
+    return '<div class=\"sav-row\">'+
+      '<div class=\"sav-row-header\">'+
+        '<span class=\"sav-lbl\">'+label+'</span>'+
+        '<span class=\"sav-val-green\">'+fmt(savVal)+'</span>'+
       '</div>'+
-      /* ── Green bar: savings value label inside ── */
-      '<div style=\"position:relative\">'+
+      /* ── GREEN bar first (savings) ── */
+      '<div style=\"position:relative;margin-bottom:8px\">'+
         '<div class=\"sav-bar-track sav-bar-bg-green\">'+
           '<div class=\"sav-bar-green\" style=\"height:100%;width:'+sp+'%;border-radius:6px;transition:width 1s;display:flex;align-items:center;padding-left:10px\">'+
             '<span style=\"font-size:.72rem;font-weight:800;color:#fff;white-space:nowrap;letter-spacing:-.01em\">'+sNum+'</span>'+
@@ -931,6 +979,7 @@ function renderResults(r,tiers,kwp){
           '</div>'+
         '</div>'+
       '</div>'+
+      billBar+
     '</div>';
   }
 
@@ -941,15 +990,15 @@ function renderResults(r,tiers,kwp){
   var s25Max= Math.max(s25BillAmt, r.s25, 300000);
 
   var dualBar =
-    dualBarRow('Monthly savings',  billAmt,    r.mSav, mMax,
+    dualBarRow('Monthly Savings Vs Monthly Bill', billAmt, r.mSav, mMax,
       'Your present monthly average electricity bill as per the amount entered above',
-      'Your monthly savings as per average monthly solar generation × tariff (₹'+TARIFF+'/unit)') +
-    dualBarRow('Yearly savings',   yBillAmt,   r.ySav, yMax,
+      'Your monthly savings as per average monthly solar generation × tariff (₹'+TARIFF+'/unit)', !showBillBar) +
+    dualBarRow('Yearly Savings Vs Yearly Bill',   yBillAmt, r.ySav, yMax,
       'Your total yearly electricity bill (monthly bill × 12)',
-      'Your yearly savings as per average solar generation × tariff (₹'+TARIFF+'/unit)') +
-    dualBarRow('25-Year savings',  s25BillAmt, r.s25,  s25Max,
+      'Your yearly savings as per average solar generation × tariff (₹'+TARIFF+'/unit)', !showBillBar) +
+    dualBarRow('25-Year Savings Vs 25-Year Bill', s25BillAmt, r.s25, s25Max,
       'Your total electricity bill over 25 years (monthly bill × 12 × 25)',
-      'Your 25-year savings as per average solar generation × tariff (₹'+TARIFF+'/unit)') +
+      'Your 25-year savings as per average solar generation × tariff (₹'+TARIFF+'/unit)', !showBillBar) +
     '';
   var savBars = dualBar;
 
@@ -978,8 +1027,8 @@ function renderResults(r,tiers,kwp){
         '<div class="res-card">'+
           '<h3 style="justify-content:space-between"><span style="display:flex;align-items:center;gap:6px"><i class="ri-bar-chart-line"></i> Savings Summary</span>'+
           '<span style="display:flex;gap:12px;align-items:center">'+
-            '<span style="display:flex;align-items:center;gap:5px;font-size:.68rem;font-weight:700;color:#1E3A5C;text-transform:none;letter-spacing:0"><span style="width:14px;height:7px;border-radius:4px;background:linear-gradient(90deg,#60A5FA,#BAD9FF);display:inline-block"></span>Electricity Bill</span>'+
             '<span style="display:flex;align-items:center;gap:5px;font-size:.68rem;font-weight:700;color:#1E3A5C;text-transform:none;letter-spacing:0"><span style="width:14px;height:7px;border-radius:4px;background:linear-gradient(90deg,#166534,#22C55E);display:inline-block"></span>Solar Savings</span>'+
+            '<span style="display:flex;align-items:center;gap:5px;font-size:.68rem;font-weight:700;color:#1E3A5C;text-transform:none;letter-spacing:0"><span style="width:14px;height:7px;border-radius:4px;background:linear-gradient(90deg,#60A5FA,#BAD9FF);display:inline-block"></span>Electricity Bill</span>'+
           '</span></h3>'+
           '<div class="sav-viz" style="padding:16px 18px">'+savBars+'</div>'+
         '</div>'+
