@@ -13,8 +13,9 @@
     --surface:#F0F4F8;--white:#ffffff;--border:#E2E8F0;--text:#0F172A;--muted:#64748B;
     --green:#16A34A;--orange:#EA580C;--purple:#9333EA;--red:#DC2626;--blue:#2563EB;
   }
-  *{font-family:'Plus Jakarta Sans',sans-serif;box-sizing:border-box;margin:0;padding:0;}
-  body{background:var(--surface);color:var(--text);}
+  *{font-family:'Plus Jakarta Sans',sans-serif;box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--surface);color:var(--text);-webkit-text-size-adjust:100%;}
 
   /* ── HEADER ─────────────────────────── */
   .site-header{
@@ -262,16 +263,854 @@
     .hero{padding:36px 24px 44px;}
     .main{padding:24px 18px;}
   }
-  @media(max-width:640px){
-    .kpi-row{grid-template-columns:1fr 1fr;}
-    .input-card-body{padding:1.4rem 1.2rem;}
+  @media(max-width:768px){
+    .kpi-row{grid-template-columns:repeat(2,1fr);}
     .two-col{grid-template-columns:1fr!important;}
     .three-col{grid-template-columns:1fr 1fr!important;}
-    .hero h1{font-size:1.5rem;}
+    .input-card-body{padding:1.2rem 1rem;}
+    .hero{padding:28px 18px 36px;}
+    .hero h1{font-size:1.35rem;}
+    .hero p{font-size:.82rem;}
+    .main{padding:18px 12px;}
+    .tabs{width:100%;justify-content:center;}
+    .tab{font-size:.68rem;padding:8px 14px;}
+    .results-grid{grid-template-columns:1fr!important;}
+    .kpi{padding:14px 16px;}
+    .kpi .val{font-size:1.2rem;}
   }
+  @media(max-width:640px){
+    .kpi-row{grid-template-columns:1fr 1fr;}
+    .input-card-body{padding:1rem .9rem;}
+    .two-col{grid-template-columns:1fr!important;}
+    .three-col{grid-template-columns:1fr 1fr!important;}
+    .hero h1{font-size:1.2rem;}
+    .site-header{padding:0 14px;height:56px;}
+    .logo{font-size:1.1rem;}
+    .logo-icon{width:28px;height:28px;font-size:.9rem;}
+    .header-tag{display:none;}
+    .input-card-title{padding:.9rem 1rem;font-size:.95rem;}
+    #inverter-row{max-width:100%!important;}
+    .calc-btn{padding:13px 22px;font-size:.88rem;}
+    .act-btns{flex-direction:column;gap:10px;}
+    .act-btns .btn{width:100%;justify-content:center;}
+  }
+  @media(max-width:420px){
+    .kpi-row{grid-template-columns:1fr 1fr;}
+    .kpi{padding:12px;}
+    .kpi .lbl{font-size:.6rem;}
+    .kpi .val{font-size:1.05rem;}
+    .main{padding:14px 10px;}
+    .hero{padding:22px 14px 30px;}
+    .hero h1{font-size:1.1rem;}
+  }
+
+  /* ═══════════════════════════════════════════
+     LOGIN OVERLAY — injected, does not affect
+     any calculator styles below
+  ═══════════════════════════════════════════ */
+  /* ═══════════════════════════════════════════════════════
+     LOGIN OVERLAY — SOLAR PANEL BACKGROUND
+  ═══════════════════════════════════════════════════════ */
+  #login-overlay{
+    position:fixed;inset:0;z-index:9999;
+    background:#0a1628;
+    display:none;flex-direction:column;
+    overflow:hidden;
+  }
+  #login-overlay.visible{
+    display:flex;
+    animation:overlayIn .4s cubic-bezier(.22,.68,0,1.2) both;
+  }
+  @keyframes overlayIn{
+    from{opacity:0;transform:scale(1.03);}
+    to{opacity:1;transform:scale(1);}
+  }
+  /* real solar panel photo background */
+  #ov-solar-scene{
+    position:absolute;inset:0;z-index:0;
+    background-image:url('https://images.unsplash.com/photo-1613665813446-82a78c468a1d?w=1800&q=85&fit=crop&auto=format');
+    background-position:center 60%;
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+  }
+  /* dark overlay so form card stays readable */
+  #login-overlay::after{
+    content:'';position:absolute;inset:0;pointer-events:none;z-index:1;
+    background:
+      linear-gradient(160deg,rgba(8,18,34,.55) 0%,rgba(10,22,40,.42) 50%,rgba(8,18,34,.60) 100%),
+      radial-gradient(ellipse 55% 45% at 75% 5%,rgba(244,162,40,.15) 0%,transparent 55%),
+      radial-gradient(ellipse 40% 50% at 5% 95%,rgba(43,95,161,.12) 0%,transparent 55%);
+  }
+  #login-overlay.hiding{
+    animation:overlayOut .55s cubic-bezier(.4,0,.2,1) forwards;
+    pointer-events:none;
+  }
+  @keyframes overlayOut{
+    0%{opacity:1;transform:scale(1);}
+    100%{opacity:0;transform:scale(1.04);}
+  }
+
+
+  /* ── HEADER ── */
+  .ov-header{
+    background:rgba(10,22,40,.6);backdrop-filter:blur(12px);
+    border-bottom:1px solid rgba(255,255,255,.08);
+    padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;
+    flex-shrink:0;position:relative;z-index:2;
+  }
+  .ov-logo{font-size:1.35rem;font-weight:800;color:#fff;letter-spacing:-.5px;display:flex;align-items:center;gap:10px;}
+  .ov-logo-icon{
+    width:36px;height:36px;background:linear-gradient(135deg,#F4A228,#E8931A);
+    border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;
+    box-shadow:0 4px 12px rgba(244,162,40,.4);
+  }
+  .ov-tag{
+    background:rgba(244,162,40,.15);color:var(--amber);font-weight:700;font-size:.68rem;
+    padding:5px 14px;border-radius:20px;letter-spacing:.6px;
+    border:1px solid rgba(244,162,40,.28);text-transform:uppercase;
+  }
+
+  /* ── BODY ── */
+  .ov-body{
+    flex:1;display:flex;align-items:center;justify-content:center;
+    padding:28px 20px;overflow-y:auto;position:relative;z-index:2;
+  }
+
+  /* ── CARD ── */
+  .ov-card{
+    background:rgba(255,255,255,.97);
+    backdrop-filter:blur(20px);
+    border-radius:28px;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.12),
+      0 24px 80px rgba(0,0,0,.45),
+      0 8px 24px rgba(0,0,0,.2);
+    width:100%;max-width:470px;overflow:hidden;
+    animation:cardIn .6s cubic-bezier(.22,.68,0,1.2) both;
+  }
+  @keyframes cardIn{
+    from{opacity:0;transform:translateY(32px) scale(.95);}
+    to{opacity:1;transform:none;}
+  }
+
+  /* ── HERO ── */
+  .ov-hero{
+    background:linear-gradient(135deg,#0a1628 0%,#1A3A5C 55%,#2B5FA1 100%);
+    padding:30px 32px 26px;position:relative;overflow:hidden;
+  }
+  .ov-hero::before{
+    content:'';position:absolute;inset:0;
+    background:
+      radial-gradient(ellipse 70% 80% at 90% 10%,rgba(244,162,40,.22) 0%,transparent 60%),
+      radial-gradient(ellipse 50% 40% at 10% 90%,rgba(43,95,161,.3) 0%,transparent 60%);
+    pointer-events:none;
+  }
+  .ov-hero::after{
+    content:'';position:absolute;inset:0;
+    background-image:radial-gradient(rgba(255,255,255,.04) 1px,transparent 1px);
+    background-size:22px 22px;pointer-events:none;
+  }
+  /* animated sun rings */
+  .ov-sun{
+    position:absolute;right:-10px;top:50%;transform:translateY(-50%);
+    width:110px;height:110px;
+  }
+  .ov-sun-ring{
+    position:absolute;inset:0;border-radius:50%;
+    border:1.5px solid rgba(244,162,40,.25);
+    animation:sunPulse 3s ease-in-out infinite;
+  }
+  .ov-sun-ring:nth-child(2){inset:-14px;animation-delay:.5s;border-color:rgba(244,162,40,.15);}
+  .ov-sun-ring:nth-child(3){inset:-28px;animation-delay:1s;border-color:rgba(244,162,40,.08);}
+  .ov-sun-core{
+    position:absolute;inset:18px;border-radius:50%;
+    background:radial-gradient(circle,rgba(244,162,40,.55),rgba(244,162,40,.15));
+    display:flex;align-items:center;justify-content:center;font-size:1.8rem;
+  }
+  @keyframes sunPulse{
+    0%,100%{transform:scale(1);opacity:1;}
+    50%{transform:scale(1.08);opacity:.7;}
+  }
+  .ov-badge{
+    display:inline-flex;align-items:center;gap:6px;
+    background:rgba(244,162,40,.18);border:1px solid rgba(244,162,40,.32);
+    color:var(--amber);font-size:.67rem;font-weight:800;
+    padding:5px 13px;border-radius:20px;letter-spacing:.6px;text-transform:uppercase;
+    margin-bottom:12px;position:relative;z-index:1;
+    box-shadow:0 2px 8px rgba(244,162,40,.2);
+  }
+  .ov-hero h2{
+    font-size:1.5rem;font-weight:800;color:#fff;
+    letter-spacing:-.03em;line-height:1.2;
+    position:relative;z-index:1;
+    text-shadow:0 2px 12px rgba(0,0,0,.3);
+  }
+  .ov-hero p{
+    font-size:.82rem;color:rgba(255,255,255,.6);
+    margin-top:7px;font-weight:500;position:relative;z-index:1;line-height:1.5;
+  }
+  /* step indicators */
+  .ov-steps{
+    display:flex;align-items:center;gap:6px;
+    margin-top:16px;position:relative;z-index:1;
+  }
+  .ov-step-dot{
+    width:28px;height:4px;border-radius:2px;
+    background:rgba(255,255,255,.2);transition:background .3s,width .3s;
+  }
+  .ov-step-dot.active{background:var(--amber);width:36px;}
+
+  /* ── FORM ── */
+  .ov-form{padding:26px 32px 30px;display:flex;flex-direction:column;gap:18px;}
+  .ov-field{display:flex;flex-direction:column;gap:6px;}
+  .ov-label{
+    font-size:.68rem;font-weight:800;color:#64748b;
+    text-transform:uppercase;letter-spacing:.7px;
+    display:flex;align-items:center;gap:5px;
+  }
+  .ov-label .req{color:#e53e3e;font-size:.8rem;}
+  .ov-input-row{display:flex;gap:10px;align-items:flex-start;}
+
+  /* input wrapper */
+  .ov-iw{
+    display:flex;align-items:center;flex:1;
+    border:1.5px solid #e8eef5;border-radius:13px;
+    background:#f8fafc;transition:border-color .2s,box-shadow .2s,background .2s;
+    overflow:hidden;
+  }
+  .ov-iw:focus-within{
+    border-color:var(--navy);
+    background:#fff;
+    box-shadow:0 0 0 4px rgba(26,58,92,.08),0 2px 8px rgba(26,58,92,.06);
+  }
+  .ov-iw.err{border-color:#e53e3e;background:#fff8f8;}
+  .ov-icon{
+    width:44px;min-width:44px;height:50px;
+    display:flex;align-items:center;justify-content:center;
+    background:transparent;border-right:1.5px solid #e8eef5;
+    color:#94a3b8;font-size:1.05rem;transition:color .2s;
+  }
+  .ov-iw:focus-within .ov-icon{color:var(--navy-light);border-right-color:#dde3ec;}
+  .ov-iw input{
+    flex:1;border:none;outline:none;padding:0 14px;height:50px;
+    font-size:.93rem;font-weight:600;color:var(--text);background:transparent;
+    font-family:'Plus Jakarta Sans',sans-serif;
+  }
+  .ov-iw input::placeholder{color:#c0ccd8;font-weight:500;}
+
+  /* detect / live button */
+  .ov-detect{
+    flex-shrink:0;height:50px;padding:0 16px;
+    background:linear-gradient(135deg,#1A3A5C,#2B5FA1);
+    color:#fff;border:none;border-radius:13px;cursor:pointer;
+    font-size:.74rem;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif;
+    display:flex;align-items:center;gap:7px;white-space:nowrap;
+    transition:transform .15s,box-shadow .2s;letter-spacing:.3px;
+    position:relative;overflow:hidden;
+    box-shadow:0 4px 12px rgba(26,58,92,.3);
+  }
+  .ov-detect::before{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(135deg,rgba(255,255,255,.12),transparent);
+  }
+  .ov-detect:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(26,58,92,.4);}
+  .ov-detect:active{transform:translateY(0);box-shadow:0 2px 6px rgba(26,58,92,.2);}
+  .ov-detect.detecting{pointer-events:none;opacity:.8;}
+  .ov-detect.detecting .ov-detect-lbl{opacity:0;}
+  .ov-detect .ov-spin{position:absolute;inset:0;display:none;align-items:center;justify-content:center;}
+  .ov-detect.detecting .ov-spin{display:flex;}
+  .ov-spin-ring{
+    width:18px;height:18px;
+    border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;
+    border-radius:50%;animation:ovSpin .7s linear infinite;
+  }
+  @keyframes ovSpin{to{transform:rotate(360deg)}}
+
+  .ov-hint{
+    font-size:.69rem;color:#94a3b8;font-weight:500;
+    display:flex;align-items:center;gap:4px;margin-top:2px;
+  }
+
+  .ov-loc-loading{padding:12px 14px;font-size:.82rem;color:#94a3b8;text-align:center;}
+  .ov-err{
+    font-size:.7rem;color:#e53e3e;font-weight:600;
+    display:none;align-items:center;gap:5px;margin-top:1px;
+  }
+  .ov-err.show{display:flex;}
+
+  /* ── SUBMIT BUTTON ── */
+  .ov-submit{
+    width:100%;height:52px;
+    background:linear-gradient(135deg,#F4A228 0%,#E8931A 60%,#d97c0e 100%);
+    color:#0f2540;border:none;border-radius:14px;
+    font-size:1rem;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;
+    transition:transform .15s,box-shadow .2s;
+    box-shadow:0 6px 20px rgba(244,162,40,.45),0 2px 6px rgba(244,162,40,.2);
+    position:relative;overflow:hidden;margin-top:4px;letter-spacing:.01em;
+  }
+  .ov-submit::before{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(135deg,rgba(255,255,255,.18),transparent 55%);
+  }
+  .ov-submit:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 28px rgba(244,162,40,.55),0 4px 10px rgba(244,162,40,.25);
+  }
+  .ov-submit:active{transform:translateY(0);box-shadow:0 3px 10px rgba(244,162,40,.3);}
+
+  /* ── SUCCESS SCREEN ── */
+  .ov-success{
+    display:none;flex-direction:column;align-items:center;
+    padding:32px 28px 28px;text-align:center;gap:0;
+  }
+  .ov-success.show{display:flex;}
+  .ov-success-icon{
+    width:72px;height:72px;border-radius:50%;
+    background:linear-gradient(135deg,#d1fae5,#a7f3d0);
+    display:flex;align-items:center;justify-content:center;
+    font-size:2rem;color:#16a34a;margin-bottom:16px;
+    box-shadow:0 8px 24px rgba(22,163,74,.2);
+    animation:successPop .5s cubic-bezier(.22,.68,0,1.4) both;
+  }
+  @keyframes successPop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+  .ov-success h3{font-size:1.2rem;font-weight:800;color:var(--navy);margin-bottom:6px;}
+  .ov-success p{font-size:.82rem;color:#64748b;line-height:1.6;font-weight:500;margin-bottom:20px;}
+  .ov-success-name{color:var(--amber);font-weight:800;}
+  /* data summary card */
+  .ov-data-summary{
+    width:100%;background:#f8fafc;border:1.5px solid #e8eef5;
+    border-radius:14px;padding:14px 16px;text-align:left;
+    display:flex;flex-direction:column;gap:8px;margin-bottom:18px;
+  }
+  .ov-data-row{display:flex;align-items:flex-start;gap:10px;font-size:.78rem;}
+  .ov-data-row i{color:var(--amber);font-size:.9rem;margin-top:1px;flex-shrink:0;}
+  .ov-data-label{font-weight:700;color:#64748b;min-width:62px;flex-shrink:0;}
+  .ov-data-val{font-weight:600;color:var(--navy);word-break:break-all;}
+  /* continue button */
+  .ov-continue-btn{
+    width:100%;height:50px;
+    background:linear-gradient(135deg,#F4A228,#E8931A);
+    color:var(--navy);border:none;border-radius:14px;
+    font-size:.95rem;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+    box-shadow:0 4px 14px rgba(244,162,40,.35);transition:transform .15s,box-shadow .15s;
+  }
+  .ov-continue-btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(244,162,40,.45);}
+  /* ── FOOTER ── */
+  .ov-foot{
+    border-top:1px solid #f0f4f8;padding:14px 32px;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    background:linear-gradient(135deg,#f8fafc,#f0f4f8);
+  }
+  .ov-foot span{font-size:.7rem;color:#94a3b8;font-weight:600;}
+  .ov-foot i{color:var(--amber);font-size:.85rem;}
+  .ov-foot-trust{display:flex;align-items:center;gap:16px;justify-content:center;}
+  .ov-trust-item{display:flex;align-items:center;gap:5px;font-size:.67rem;color:#94a3b8;font-weight:600;}
+
+  /* field stagger animation */
+  .ov-field{opacity:0;transform:translateY(12px);animation:fieldIn .4s ease forwards;}
+  .ov-field:nth-child(1){animation-delay:.1s;}
+  .ov-field:nth-child(2){animation-delay:.18s;}
+  .ov-field:nth-child(3){animation-delay:.26s;}
+  .ov-field:nth-child(4){animation-delay:.34s;}
+  .ov-field:nth-child(5){animation-delay:.42s;}
+  .ov-field:nth-child(6){animation-delay:.5s;}
+  @keyframes fieldIn{to{opacity:1;transform:none;}}
+
+  @media(max-width:540px){
+    .ov-header{padding:0 16px;height:54px;}
+    .ov-logo{font-size:1.1rem;}
+    .ov-logo-icon{width:30px;height:30px;font-size:.9rem;}
+    .ov-tag{display:none;}
+    .ov-hero{padding:22px 18px 20px;}
+    .ov-hero h2{font-size:1.18rem;}
+    .ov-hero p{font-size:.76rem;}
+    .ov-sun{width:80px;height:80px;right:10px;}
+    .ov-sun-core{font-size:1.4rem;}
+    .ov-form{padding:18px 16px 22px;gap:13px;}
+    .ov-card{border-radius:18px;}
+    .ov-input-row{flex-direction:column;gap:8px;}
+    .ov-detect{width:100%;justify-content:center;}
+    .ov-body{padding:14px 10px;}
+    .ov-iw input{height:46px;font-size:.88rem;}
+    .ov-icon{width:40px;min-width:40px;height:46px;}
+    .ov-label{font-size:.65rem;}
+    .ov-submit{height:48px;font-size:.92rem;}
+    .ov-foot{padding:11px 16px;}
+    .ov-trust-item{font-size:.62rem;}
+    .ov-captcha-box{padding:12px 14px;}
+    .ov-robot-label{font-size:.82rem;}
+    .ov-captcha-display{min-width:100px;font-size:1rem;padding:8px 10px;}
+    .ov-steps{gap:5px;}
+    .ov-step-dot{width:22px;}
+    .ov-step-dot.active{width:28px;}
+  }
+  @media(max-width:380px){
+    .ov-hero{padding:18px 14px 16px;}
+    .ov-hero h2{font-size:1.05rem;}
+    .ov-form{padding:14px 12px 18px;gap:11px;}
+    .ov-body{padding:10px 8px;}
+    .ov-iw input{height:44px;}
+    .ov-icon{width:36px;min-width:36px;height:44px;}
+    .ov-captcha-input-row{flex-wrap:wrap;}
+    .ov-cap-iw{min-width:100%;order:2;}
+    .ov-captcha-display{order:1;min-width:auto;flex:1;}
+  }
+
 </style>
 </head>
 <body>
+
+<!-- ═══════════════════════════════════════════
+     LOGIN OVERLAY — sits on top of calculator
+     Removed on successful submit, calculator
+     remains 100% unchanged underneath
+═══════════════════════════════════════════ -->
+<div id="login-overlay">
+<!-- ═══ SOLAR PANEL BACKGROUND SCENE ═══ -->
+<div id="ov-solar-scene"></div>
+
+
+  <!-- header same as calculator -->
+  <div class="ov-header">
+    <div class="ov-logo">
+      <div class="ov-logo-icon">☀️</div>
+      <span style="color:#fff;letter-spacing:-.5px">Eco<span style="color:var(--amber)">Soch</span></span> Solar
+    </div>
+    <div class="ov-tag">⚡ Get Started Free</div>
+  </div>
+
+  <!-- body -->
+  <div class="ov-body">
+    <div class="ov-card">
+
+      <!-- hero -->
+      <div class="ov-hero">
+        <div class="ov-sun">
+          <div class="ov-sun-ring"></div>
+          <div class="ov-sun-ring"></div>
+          <div class="ov-sun-ring"></div>
+          <div class="ov-sun-core">☀️</div>
+        </div>
+        <div class="ov-badge"><i class="ri-shield-check-fill"></i> Free &amp; Instant Quote</div>
+        <h2>Design Your Solar System</h2>
+        <p>Fill in your details below and our solar experts will craft a personalised system design for your home.</p>
+        <div class="ov-steps">
+          <div class="ov-step-dot active"></div>
+          <div class="ov-step-dot active"></div>
+          <div class="ov-step-dot active"></div>
+          <div class="ov-step-dot active"></div>
+          <div class="ov-step-dot"></div>
+        </div>
+      </div>
+
+      <!-- form -->
+      <div class="ov-form">
+
+        <!-- 1. Location -->
+        <div class="ov-field">
+          <label class="ov-label"><i class="ri-map-pin-2-line"></i> Location <span class="req">*</span></label>
+          <div class="ov-input-row">
+            <div class="ov-iw" id="ow-loc">
+              <div class="ov-icon"><i class="ri-map-pin-2-line"></i></div>
+              <input type="text" id="oi-loc" placeholder="Enter city or area…" autocomplete="off"
+                oninput="ovValidate('oi-loc','oe-loc','ow-loc')">
+            </div>
+            <button class="ov-detect" id="ov-det-btn" onclick="ovDetect()">
+              <span class="ov-detect-lbl"><i class="ri-navigation-fill"></i> Live</span>
+              <span class="ov-spin"><span class="ov-spin-ring"></span></span>
+            </button>
+          </div>
+          <!-- Google Maps verified location link (shown after detection) -->
+          <div id="ov-maps-link" style="display:none;margin-top:5px;">
+            <a id="ov-maps-anchor" href="#" target="_blank" rel="noopener"
+               style="font-size:.72rem;font-weight:700;color:var(--navy-light);display:inline-flex;align-items:center;gap:5px;text-decoration:none;padding:4px 10px;border-radius:8px;background:rgba(43,95,161,.08);border:1px solid rgba(43,95,161,.18);transition:background .15s;">
+              <i class="ri-map-2-line"></i> Verify on Google Maps
+            </a>
+          </div>
+          <div class="ov-hint"><i class="ri-information-line"></i> Or click "Live" to auto-detect your location</div>
+          <div class="ov-err" id="oe-loc"><i class="ri-error-warning-fill"></i> Please enter your location</div>
+        </div>
+
+        <!-- 2. Customer Name -->
+        <div class="ov-field">
+          <label class="ov-label"><i class="ri-user-3-line"></i> Customer Name <span class="req">*</span></label>
+          <div class="ov-iw" id="ow-name">
+            <div class="ov-icon"><i class="ri-user-3-line"></i></div>
+            <input type="text" id="oi-name" placeholder="Your full name"
+              oninput="ovValidate('oi-name','oe-name','ow-name')">
+          </div>
+          <div class="ov-err" id="oe-name"><i class="ri-error-warning-fill"></i> Please enter your name</div>
+        </div>
+
+        <!-- 3. Phone -->
+        <div class="ov-field">
+          <label class="ov-label"><i class="ri-phone-line"></i> Phone Number <span class="req">*</span></label>
+          <div class="ov-iw" id="ow-phone">
+            <div class="ov-icon"><i class="ri-phone-line"></i></div>
+            <input type="tel" id="oi-phone" placeholder="10-digit mobile number" maxlength="10"
+              oninput="this.value=this.value.replace(/[^0-9]/g,'');ovValidatePhone()">
+          </div>
+          <div class="ov-err" id="oe-phone"><i class="ri-error-warning-fill"></i> Enter a valid 10-digit number</div>
+        </div>
+
+        <!-- 4. Email -->
+        <div class="ov-field">
+          <label class="ov-label"><i class="ri-mail-line"></i> Email Address <span class="req">*</span></label>
+          <div class="ov-iw" id="ow-email">
+            <div class="ov-icon"><i class="ri-mail-line"></i></div>
+            <input type="email" id="oi-email" placeholder="you@example.com"
+              oninput="ovValidateEmail()">
+          </div>
+          <div class="ov-err" id="oe-email"><i class="ri-error-warning-fill"></i> Enter a valid email address</div>
+        </div>
+
+        <!-- submit -->
+        <button class="ov-submit" onclick="ovSubmit()">
+          <i class="ri-sun-fill"></i> Start My Solar Journey <i class="ri-arrow-right-line"></i>
+        </button>
+
+      </div><!-- /ov-form -->
+
+      <!-- ── SUCCESS SCREEN (shown after submit) ── -->
+      <div class="ov-success" id="ov-success">
+        <div class="ov-success-icon"><i class="ri-check-line"></i></div>
+        <h3>Welcome, <span class="ov-success-name" id="ov-success-name">there</span>! 🎉</h3>
+        <p>Your details have been captured successfully.<br>Here's a summary of what was saved:</p>
+        <!-- data summary -->
+        <div class="ov-data-summary">
+          <div class="ov-data-row"><i class="ri-user-fill"></i><span class="ov-data-label">Name</span><span class="ov-data-val" id="ss-name">—</span></div>
+          <div class="ov-data-row"><i class="ri-phone-fill"></i><span class="ov-data-label">Phone</span><span class="ov-data-val" id="ss-phone">—</span></div>
+          <div class="ov-data-row"><i class="ri-mail-fill"></i><span class="ov-data-label">Email</span><span class="ov-data-val" id="ss-email">—</span></div>
+          <div class="ov-data-row"><i class="ri-map-pin-fill"></i><span class="ov-data-label">Location</span><span class="ov-data-val" id="ss-loc">—</span></div>
+          <div class="ov-data-row"><i class="ri-time-fill"></i><span class="ov-data-label">Saved at</span><span class="ov-data-val" id="ss-time">—</span></div>
+        </div>
+        <!-- continue to calculator -->
+        <button class="ov-continue-btn" onclick="ovContinue()">
+          <i class="ri-calculator-line"></i> View My Solar Calculation
+        </button>
+      </div>
+
+      <div class="ov-foot">
+        <div class="ov-foot-trust">
+          <div class="ov-trust-item"><i class="ri-shield-check-line" style="color:var(--amber)"></i> Data Protected</div>
+          <div class="ov-trust-item"><i class="ri-eye-off-line" style="color:var(--amber)"></i> Never Shared</div>
+        </div>
+      </div>
+
+    </div><!-- /ov-card -->
+  </div><!-- /ov-body -->
+</div><!-- /login-overlay -->
+
+<script>
+/* ═══════════════════════════════════════════
+   LOGIN OVERLAY JS
+   All functions prefixed ov* to avoid any
+   conflict with calculator functions
+═══════════════════════════════════════════ */
+function ovSetErr(errId, iwId, show){
+  var e=document.getElementById(errId);
+  var iw=document.getElementById(iwId);
+  if(e) e.className='ov-err'+(show?' show':'');
+  if(iw) iw.classList.toggle('err', show);
+}
+function ovValidate(inpId, errId, iwId){
+  var v=document.getElementById(inpId).value.trim();
+  ovSetErr(errId,iwId,v==='');
+  return v!=='';
+}
+function ovValidatePhone(){
+  var v=document.getElementById('oi-phone').value.trim();
+  var ok=v.length===10&&/^[6-9][0-9]{9}$/.test(v);
+  if(v.length>0) ovSetErr('oe-phone','ow-phone',!ok);
+  return ok;
+}
+function ovValidateEmail(){
+  var v=document.getElementById('oi-email').value.trim();
+  var ok=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  if(v.length>0) ovSetErr('oe-email','ow-email',!ok);
+  return ok;
+}
+// Store detected lat/lng for Google Maps link
+var _ovDetectedLat = null;
+var _ovDetectedLng = null;
+
+function ovDetect(){
+  var btn = document.getElementById('ov-det-btn');
+  var inp = document.getElementById('oi-loc');
+  var mapsDiv  = document.getElementById('ov-maps-link');
+
+  if(!navigator.geolocation){
+    inp.value = 'Geolocation not supported by this browser';
+    return;
+  }
+
+  btn.classList.add('detecting');
+  inp.value = '';
+  inp.placeholder = 'Detecting…';
+  if(mapsDiv) mapsDiv.style.display = 'none';
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      var lat = pos.coords.latitude;
+      var lng = pos.coords.longitude;
+      _ovDetectedLat = lat;
+      _ovDetectedLng = lng;
+
+      // Use Google Maps Geocoding API (no key needed for reverse geocode embed)
+      // Fallback chain: Google Maps Geocoding → Nominatim
+      ovReverseGeocode(lat, lng, function(result){
+        inp.value = result;
+        inp.placeholder = 'Enter city or area…';
+        btn.classList.remove('detecting');
+        ovSetErr('oe-loc', 'ow-loc', false);
+        // Show Google Maps verification link
+        if(mapsDiv){
+          mapsDiv.style.display = 'block';
+          var anchor = document.getElementById('ov-maps-anchor');
+          if(anchor){
+            anchor.href = 'https://www.google.com/maps?q=' + lat + ',' + lng;
+          }
+        }
+      }, function(){
+        inp.value = lat.toFixed(5) + ', ' + lng.toFixed(5);
+        inp.placeholder = 'Enter city or area…';
+        btn.classList.remove('detecting');
+        if(mapsDiv){
+          mapsDiv.style.display = 'block';
+          var anchor = document.getElementById('ov-maps-anchor');
+          if(anchor) anchor.href = 'https://www.google.com/maps?q=' + lat + ',' + lng;
+        }
+      });
+    },
+    function(err){
+      btn.classList.remove('detecting');
+      inp.placeholder = 'Enter city or area…';
+      var msgs = {
+        1: 'Location access denied. Please allow location permission.',
+        2: 'Location unavailable. Please enter manually.',
+        3: 'Location timed out. Please try again.'
+      };
+      inp.value = msgs[err.code] || 'Could not detect location.';
+    },
+    {
+      timeout: 15000,
+      enableHighAccuracy: true,
+      maximumAge: 0
+    }
+  );
+}
+
+// Reverse geocode using Nominatim with smart Indian address formatting
+function ovReverseGeocode(lat, lng, onSuccess, onError){
+  // Try BigDataCloud first — free, no key needed, very accurate for India
+  var bdcUrl = 'https://api.bigdatacloud.net/data/reverse-geocode-client'
+    + '?latitude=' + lat
+    + '&longitude=' + lng
+    + '&localityLanguage=en';
+
+  fetch(bdcUrl)
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(!d || !d.countryCode){ throw new Error('no data'); }
+
+      // BigDataCloud gives very granular locality info
+      var locality  = d.locality || '';                          // e.g. Koramangala
+      var city      = d.city || d.principalSubdivisionCode || '';// e.g. Bengaluru
+      var localAdmin= d.localityInfo && d.localityInfo.administrative
+                      ? d.localityInfo.administrative : [];
+
+      // Pick best city from administrative hierarchy (level 4-6 = city/town)
+      var adminCity = '';
+      localAdmin.forEach(function(lvl){
+        if(lvl.adminLevel >= 4 && lvl.adminLevel <= 6 && lvl.name && !adminCity){
+          adminCity = lvl.name;
+        }
+      });
+
+      var state = d.principalSubdivision || '';                 // e.g. Karnataka
+
+      var parts = [];
+      if(locality && locality !== adminCity) parts.push(locality);
+      if(adminCity) parts.push(adminCity);
+      else if(city && city !== locality)    parts.push(city);
+      if(state) parts.push(state);
+
+      if(parts.length >= 2){
+        onSuccess(parts.join(', '));
+      } else {
+        // Not enough detail — fall back to Nominatim
+        ovNominatimGeocode(lat, lng, onSuccess, onError);
+      }
+    })
+    .catch(function(){
+      // BigDataCloud failed — use Nominatim
+      ovNominatimGeocode(lat, lng, onSuccess, onError);
+    });
+}
+
+function ovNominatimGeocode(lat, lng, onSuccess, onError){
+  // Try zoom=18 first (most precise) then fall back to zoom=14
+  var url = 'https://nominatim.openstreetmap.org/reverse'
+    + '?format=json'
+    + '&lat=' + lat
+    + '&lon=' + lng
+    + '&zoom=18'
+    + '&addressdetails=1'
+    + '&accept-language=en';
+
+  fetch(url)
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(!d || !d.address){ onError(); return; }
+      var a = d.address;
+
+      // Extract address components in order of specificity
+      var area   = a.suburb || a.neighbourhood || a.quarter || a.hamlet || '';
+      var village= a.village || a.residential || '';
+      var city   = a.city || a.town || a.municipality || '';
+      var dist   = a.state_district || a.county || '';
+      var state  = a.state || '';
+
+      // Prefer: area > village > city, then state
+      var primary   = area || village || city || dist;
+      var secondary = (city && city !== primary) ? city : '';
+      var tertiary  = state;
+
+      var parts = [primary, secondary, tertiary].filter(Boolean);
+
+      // Avoid duplication (e.g. Bengaluru, Bengaluru)
+      var unique = [];
+      parts.forEach(function(p){
+        if(!unique.length || unique[unique.length-1].toLowerCase() !== p.toLowerCase()){
+          unique.push(p);
+        }
+      });
+
+      var result = unique.length >= 2
+        ? unique.join(', ')
+        : d.display_name.split(',').slice(0,3).join(',').trim();
+
+      onSuccess(result);
+    })
+    .catch(function(){ onError(); });
+}
+// ── COOKIE HELPERS (no-expiry = year 9999) ───────────
+function ovSetCookie(name, value){
+  document.cookie = name + '=' + encodeURIComponent(value)
+    + '; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/; SameSite=Lax';
+}
+function ovGetCookie(name){
+  var match = document.cookie.match('(?:^|;)\\s*' + name + '=([^;]*)');
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+// ── GOOGLE SHEETS INTEGRATION ────────────────────────
+var GSHEET_URL = 'https://script.google.com/macros/s/AKfycbxZdaMPZIWY52f28DKN_haoIXN8nV7jqdjmJ9Ei3ZZFv6W4c-W--jWCLdn_Mt4nGGyu6Q/exec';
+var SHEET_ID   = '15VpjJ319HN3jhgS73sxPU-JuVCiFjrlsYsA4RMMwsvQ';
+
+// Flag: login captured once (this session OR prior cookie)
+var _ovLoginDone = false;
+
+// ── CHECK COOKIE ON LOAD — skip overlay if returning user ──
+(function(){
+  var saved = ovGetCookie('ecosoch_user');
+  if(saved){
+    try {
+      var d = JSON.parse(saved);
+      if(d && d.Name){
+        _ovLoginDone = true;
+        // Keep overlay hidden; no form needed
+        var ov = document.getElementById('login-overlay');
+        if(ov) ov.style.display = 'none';
+      }
+    } catch(e){}
+  }
+})();
+
+function ovSubmit(){
+  var ok = true;
+  if(!ovValidate('oi-loc','oe-loc','ow-loc'))  ok = false;
+  if(!ovValidate('oi-name','oe-name','ow-name')) ok = false;
+  if(!ovValidatePhone()){ ovSetErr('oe-phone','ow-phone',true); ok = false; }
+  if(!ovValidateEmail()){ ovSetErr('oe-email','ow-email',true); ok = false; }
+  if(!ok) return;
+
+  // ── Build payload ──────────────────────────────────
+  var now = new Date();
+  var dateStr = now.toLocaleDateString('en-IN', {day:'2-digit',month:'2-digit',year:'numeric'});
+  var timeStr = now.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+  var name  = document.getElementById('oi-name').value.trim();
+  var phone = document.getElementById('oi-phone').value.trim();
+  var email = document.getElementById('oi-email').value.trim();
+  var loc   = document.getElementById('oi-loc').value.trim();
+
+  var payload = {
+    sheetId   : SHEET_ID,
+    Timestamp : dateStr + ' ' + timeStr,
+    Name      : name,
+    Phone     : phone,
+    Email     : email,
+    Location  : loc,
+    Latitude  : _ovDetectedLat ? _ovDetectedLat.toFixed(6) : '',
+    Longitude : _ovDetectedLng ? _ovDetectedLng.toFixed(6) : '',
+    MapsLink  : (_ovDetectedLat && _ovDetectedLng)
+                  ? 'https://www.google.com/maps?q=' + _ovDetectedLat.toFixed(6) + ',' + _ovDetectedLng.toFixed(6)
+                  : ''
+  };
+
+  // ── Save to cookie (no expiry) ─────────────────────
+  ovSetCookie('ecosoch_user', JSON.stringify({
+    Name: name, Phone: phone, Email: email, Location: loc
+  }));
+
+  // ── Send to Google Apps Script ─────────────────────
+  if(GSHEET_URL.indexOf('YOUR_SCRIPT_ID') === -1){
+    fetch(GSHEET_URL, {
+      method : 'POST',
+      mode   : 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body   : JSON.stringify(payload)
+    }).catch(function(){/* silent */});
+  }
+
+  // ── Show success screen ────────────────────────────
+  var displayTime = now.toLocaleDateString('en-IN') + ' '
+    + now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+
+  document.getElementById('ov-success-name').textContent = name.split(' ')[0] || 'there';
+  document.getElementById('ss-name').textContent  = name;
+  document.getElementById('ss-phone').textContent = phone;
+  document.getElementById('ss-email').textContent = email;
+  document.getElementById('ss-loc').textContent   = loc || 'Not provided';
+  document.getElementById('ss-time').textContent  = displayTime;
+
+  document.querySelector('.ov-form').style.display = 'none';
+  document.getElementById('ov-success').classList.add('show');
+
+  _ovLoginDone = true;
+}
+
+function ovContinue(){
+  var ov = document.getElementById('login-overlay');
+  ov.classList.add('hiding');
+  ov.classList.remove('visible');
+  setTimeout(function(){
+    ov.style.display = 'none';
+    var form = document.querySelector('.ov-form');
+    if(form) form.style.display = '';
+    document.getElementById('ov-success').classList.remove('show');
+    if(_pendingCalculate){
+      _pendingCalculate = false;
+      doCalculate();
+    }
+  }, 500);
+}
+</script>
+
 <header class="site-header">
   <div class="logo">
     <div class="logo-icon">☀️</div>
@@ -300,7 +1139,7 @@
       <div class="input-card-body">
 
       <!-- TWO COLUMN LAYOUT -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:20px">
+      <div class="two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:20px">
 
         <!-- LEFT: All input fields stacked -->
         <div class="flex flex-col gap-4">
@@ -591,6 +1430,9 @@ function markDirty() {
   if(vBtn)vBtn.style.display='none';
 }
 
+// Pending calculation — runs after login
+var _pendingCalculate = false;
+
 function runCalculate() {
   // Validate mandatory fields
   var bill = document.getElementById('monthlyBill').value;
@@ -606,6 +1448,20 @@ function runCalculate() {
     alert('Please fill in the required fields:\n• ' + msgs.join('\n• '));
     return;
   }
+  // If already logged in (this session or cookie), skip overlay
+  if(_ovLoginDone){
+    doCalculate();
+    return;
+  }
+  // First time — show login overlay
+  _pendingCalculate = true;
+  var ov = document.getElementById('login-overlay');
+  ov.style.display='flex';
+  ov.classList.remove('hiding');
+  ov.classList.add('visible');
+}
+
+function doCalculate() {
   isDirty = false;
   _btnRevealed = true;
   document.getElementById('callout').style.display = 'none';
