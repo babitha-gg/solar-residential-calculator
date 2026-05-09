@@ -251,6 +251,19 @@
   .sld-sub{font-size:.78rem;color:#94a3b8;font-weight:600;}
   .bom-btn{padding:6px 14px;border-radius:8px;border:2px solid #e2e8f0;background:#f8fafc;cursor:pointer;font-size:.75rem;font-weight:800;color:#64748b;transition:all .15s;}
   .bom-btn.active{background:#1A3A5C;border-color:#1A3A5C;color:#fff;}
+  /* BOM abbreviation tooltips */
+  .bom-abbr{position:relative;display:inline-flex;align-items:center;gap:2px;cursor:help;border-bottom:1px dotted #94a3b8;padding-bottom:1px;}
+  .bom-info-icon{font-size:.78rem;color:#3B82F6;margin-left:1px;line-height:1;}
+  .bom-abbr:hover::after{
+    content:attr(data-tip);
+    position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);
+    background:#1A3A5C;color:#fff;padding:6px 10px;border-radius:6px;font-size:.72rem;font-weight:600;white-space:nowrap;
+    box-shadow:0 4px 14px rgba(0,0,0,.18);z-index:10;letter-spacing:.2px;
+  }
+  .bom-abbr:hover::before{
+    content:'';position:absolute;left:50%;bottom:calc(100% + 1px);transform:translateX(-50%);
+    border:5px solid transparent;border-top-color:#1A3A5C;z-index:10;
+  }
   .act-btn{padding:11px 26px;border:none;border-radius:12px;cursor:pointer;font-weight:800;font-size:.88rem;transition:all .2s;}
   .act-btn.s{background:#1A3A5C;color:#fff;}
   .act-btn.s:hover{background:#2B5FA1;}
@@ -1129,7 +1142,7 @@ function ovContinue(){
 <div class="main">
   <div class="tabs">
     <button class="tab active" onclick="switchTab('calculator')">⚡ Calculator</button>
-    <button class="tab" onclick="switchTab('bom')" style="display:none">📋 Bill of Materials</button>
+    <button class="tab" onclick="switchTab('bom')">📋 Bill of Materials</button>
     <button class="tab" id="sld-tab" onclick="switchTab('sld')">🔌 Single-Line Diagram</button>
   </div>
 
@@ -1277,23 +1290,51 @@ function ovContinue(){
   </div>
 
   <div class="panel" id="tab-bom">
-    <div class="res-card mb-4">
-      <h3><i class="ri-list-check-2"></i> Bill of Materials</h3>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <div id="bom-sticky-wrap" style="position:sticky;top:64px;z-index:50;background:#F8FAFC;padding:8px 0;margin-bottom:10px;">
+      <div id="bom-capacity" style="display:none;margin-bottom:8px;padding:12px 16px;background:linear-gradient(135deg,#0EA5E9 0%,#3B82F6 100%);border-radius:12px;color:#fff;box-shadow:0 4px 14px rgba(14,165,233,0.25);">
+        <div style="display:flex;align-items:stretch;justify-content:space-around;flex-wrap:wrap;gap:8px">
+          <div style="flex:1;min-width:130px;text-align:center;padding:0 8px">
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;opacity:0.85">System Capacity</div>
+            <div id="bom-capacity-value" style="font-size:1.2rem;font-weight:800;letter-spacing:0.3px;line-height:1.2;margin-top:3px"></div>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,0.25);align-self:stretch"></div>
+          <div style="flex:1;min-width:130px;text-align:center;padding:0 8px">
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;opacity:0.85">Inverter Technology</div>
+            <div id="bom-inverter-value" style="font-size:1.2rem;font-weight:800;letter-spacing:0.3px;line-height:1.2;margin-top:3px"></div>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,0.25);align-self:stretch"></div>
+          <div style="flex:1;min-width:130px;text-align:center;padding:0 8px">
+            <div style="font-size:.62rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;opacity:0.85">Roof Type</div>
+            <div id="bom-roof-value" style="font-size:1.2rem;font-weight:800;letter-spacing:0.3px;line-height:1.2;margin-top:3px"></div>
+          </div>
+        </div>
+      </div>
+      <div id="bom-filter-bar" style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:12px 14px;box-shadow:0 4px 12px rgba(15,23,42,0.08);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <span style="font-size:.7rem;color:#64748b;font-weight:800;text-transform:uppercase">Filter:</span>
         <div id="bom-filters" style="display:flex;gap:6px;flex-wrap:wrap"></div>
       </div>
     </div>
     <div style="overflow-x:auto;border-radius:12px;border:1px solid #e2e8f0">
       <table style="width:100%;border-collapse:collapse;font-size:.85rem">
-        <thead><tr style="background:#1A3A5C">
-          <th style="color:#fff;padding:11px 13px;text-align:left;font-weight:800;font-size:.72rem">#</th>
-          <th style="color:#fff;padding:11px 13px;text-align:left;font-weight:800;font-size:.72rem">Category</th>
-          <th style="color:#fff;padding:11px 13px;text-align:left;font-weight:800;font-size:.72rem">Description</th>
-          <th style="color:#fff;padding:11px 13px;text-align:right;font-weight:800;font-size:.72rem">Qty</th>
+        <thead><tr style="background:#86EFAC">
+          <th style="color:#14532D;padding:13px 13px;text-align:left;font-weight:800;font-size:.78rem;border-right:1px solid #4ADE80">#</th>
+          <th style="color:#14532D;padding:13px 13px;text-align:left;font-weight:800;font-size:.78rem;border-right:1px solid #4ADE80">Typical Brands</th>
+          <th style="color:#14532D;padding:13px 13px;text-align:left;font-weight:800;font-size:.78rem;border-right:1px solid #4ADE80">Typical Description of Materials</th>
+          <th style="color:#14532D;padding:13px 13px;text-align:right;font-weight:800;font-size:.78rem">Typical QTY</th>
         </tr></thead>
         <tbody id="bom-body"></tbody>
       </table>
+    </div>
+
+    <!-- BOM Disclaimer -->
+    <div style="margin-top:18px;padding:16px 20px;background:linear-gradient(135deg,#FEF3C7 0%,#FDE68A 100%);border:1px solid #F59E0B;border-left:5px solid #D97706;border-radius:12px;">
+      <div style="display:flex;align-items:flex-start;gap:10px;">
+        <i class="ri-information-fill" style="color:#D97706;font-size:1.1rem;flex-shrink:0;margin-top:1px;"></i>
+        <div>
+          <div style="font-size:.72rem;font-weight:800;color:#78350F;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Disclaimer</div>
+          <div style="font-size:.82rem;color:#78350F;line-height:1.55;font-weight:500;">This Bill of Materials (BoM) is typical for most residential sites and has been provided for illustrative purposes only; final component selection may vary based on site-specific requirements and availability.</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1595,66 +1636,232 @@ function calcRatings(cr){
 
 function getBOM(inv){
   var panels=CR?CR.panels:0;
+  var roof=CR?CR.roof:'flat';
   var panelQty=panels>0?panels+' nos':'Per tier';
-  var invDesc,invQty;
-  if(inv==='string'){invDesc='String Inverter like Deye / Growatt / Solis 3-Phase';invQty='1 no';}
-  else if(inv==='solaredge'){invDesc='SolarEdge HD-Wave Inverter 3-Phase';invQty='1 no';}
-  else{invDesc='Enphase Microinverter';invQty=panels>0?panels+' nos (1 per panel)':'Per panel';}
-  var rows=[
-    {c:'Solar Panels',d:'Adani 545Wp MonoPerc DCR Panels',q:panelQty},
-    {c:'Inverter',d:invDesc,q:invQty}
-  ];
-  if(inv==='solaredge')rows.push({c:'Inverter',d:'SolarEdge Power Optimiser (1 per panel)',q:panelQty+' (1 per panel)'});
-  rows.push(
-    {c:'Electrical',d:'DCDB 1-In 1-Out 220×190×100mm'+(inv==='enphase'?' (N/A for Enphase)':''),q:inv==='enphase'?'N/A':'1'},
-    {c:'Electrical',d:'3Ph EcoSoch ACDB – up to 10.5 kWp',q:'1'},
-    {c:'Electrical',d:'Panel Connector MC4 w/ Lugs Staubli',q:'4'},
-    {c:'Structure',d:'Flat Roof Mounting Structure (up to parapet)',q:'1 set'},
-    {c:'AC Cabling',d:'4 Core × 4 Sqmm Cu Flexible Cable — AJB to Meter',q:'50 m'},
-    {c:'AC Cabling',d:'UPVC Conduit 25mm + Fittings',q:'50 m'},
-    {c:'AC Cabling',d:'End Sleeve 4 Sqmm Copper',q:'25 nos'},
-    {c:'AC Cabling',d:'Twin Ferrules 4 Sqmm Cu',q:'10 nos'},
-    {c:'DC Cabling',d:'DC Cable 4 Sqmm — 1 Core Red + 1 Core Black',q:'100 m'},
-    {c:'DC Cabling',d:'End Sleeve 6 Sqmm Copper',q:'20 nos'},
-    {c:'DC Cabling',d:'Twin Ferrules 6 Sqmm Cu',q:'5 nos'},
-    {c:'DC Cabling',d:'UPVC Conduit 20mm + Fittings',q:'50 m'},
-    {c:'Earthing',d:'Earthing Full Kit 14.2mm × 1.2m, 100 micron',q:'3 nos'},
-    {c:'Earthing',d:'Earthing Chamber PVC',q:'3 nos'},
-    {c:'Earthing',d:'Lightning Arrester Conventional 1M',q:'1 no'},
-    {c:'Earthing',d:'Structure Earthing: Down Conductor 16sqmm Al White',q:'50 m'},
-    {c:'Earthing',d:'Structure Earthing: Clamp 16sqmm Metal SS',q:'55 nos'},
-    {c:'Earthing',d:'AC Earthing: Down Conductor 16sqmm Al White',q:'50 m'},
-    {c:'Earthing',d:'AC Earthing: Clamp 16sqmm Metal SS',q:'55 nos'},
-    {c:'Earthing',d:'LA Earthing: Down Conductor 16sqmm Al White',q:'50 m'},
-    {c:'Earthing',d:'LA Earthing: Clamp 16sqmm Metal SS',q:'55 nos'},
-    {c:'Fasteners',d:'Hex Bolt M8×25mm',q:'10 nos'},
-    {c:'Fasteners',d:'Hex Nut M8',q:'10 nos'},
-    {c:'Fasteners',d:'Spring Washer M8 + Plain Washer M8',q:'10 each'},
-    {c:'Accessories',d:'Plain Washer M5',q:'165 nos'},
-    {c:'Accessories',d:'Self Tapping Screw 1½" SS304',q:'165 nos'},
-    {c:'Accessories',d:'Wall Plug M6×30',q:'165 nos'},
-    {c:'Accessories',d:'Hex Coach Screw M8×50mm',q:'8 nos'},
-    {c:'Accessories',d:'Silicon Clear GP Wacker',q:'1 no'},
-    {c:'Accessories',d:'Insulation Tape — Red, Yellow, Blue, Black, Green',q:'1 each'},
-    {c:'Accessories',d:'Cable Tie 295mm Black + 100mm White',q:'25 + 20'},
-    {c:'Accessories',d:'Din Mounting Rail',q:'0.5 m'},
-    {c:'Accessories',d:'Safety Stickers + Warning Labels',q:'1 set'},
-    {c:'Accessories',d:'Bescom Meter Reading Sheet',q:'1 no'},
-    {c:'Accessories',d:'Solar Panel Cleaning Mop',q:'1 no'},
-    {c:'Accessories',d:'Water Draining Clamp 35mm',q:'38 nos'},
-    {c:'Monitoring',d:'TP-Link Wi-Fi Range Extender (Solar Monitoring)',q:'1 no'},
-    {c:'Monitoring',d:'Batla Ladder 5.5ft',q:'1 no'},
-    {c:'DCDB Components',d:'SPD DC Type 2 Citel DS50PVS-1000',q:'2 nos'},
-    {c:'DCDB Components',d:'Fuse Holder USM1HEL with 15/30/32A Fuse',q:'2 nos'},
-    {c:'DCDB Components',d:'Isolator Switch 25A 2-Pole Hager',q:'2 nos'},
-    {c:'DCDB Components',d:'Connector End ConnectWell',q:'5 nos'},
-    {c:'DCDB Components',d:'Enclosure Hensel KV 8112M IP65',q:'1 no'},
-    {c:'ACDB Components',d:'SPD AC 3-Phase Citel DS440S-280/G',q:'1 no'},
-    {c:'ACDB Components',d:'MCB 25A 4-Pole',q:'1 no'},
-    {c:'ACDB Components',d:'Enclosure KV 8112M IP65',q:'1 no'},
-    {c:'ACDB Components',d:'Connector End',q:'10 nos'},
-    {c:'ACDB Components',d:'Auxiliary Contact S2C-H6-11R',q:'1 no'}
-  );
+
+  // Phase detection (same logic as calcRatings)
+  var kwInv;
+  if(inv==='enphase'){kwInv=panels*0.480;}
+  else if(CR){kwInv=CR.ic?CR.ic:CR.dc<=3.0?3:CR.dc<=5.0?4:5;}
+  else{kwInv=5;}
+  var is1ph=kwInv<5;
+
+  // Inverter
+  var invDesc,invQty,invBrand;
+  if(inv==='string'){invDesc=is1ph?'String Inverter (1 Phase Ongrid)':'String Inverter (3 Phase Ongrid)';invQty='1 no';invBrand='Deye';}
+  else if(inv==='solaredge'){invDesc=is1ph?'SolarEdge Inverter (1 Phase Ongrid)':'SolarEdge Inverter (3 Phase Ongrid)';invQty='1 no';invBrand='SolarEdge';}
+  else{invDesc='Microinverter';invQty=panels>0?panels+' nos (1 per panel)':'Per panel';invBrand='Enphase';}
+
+  // Phase-dependent items
+  var mc4Brand = is1ph ? 'Dhash' : 'Staubli/Dhash/Reputed';
+  var meterBoxDesc = is1ph
+    ? 'Meter Cubicle Transparent Box (1-ph) to house the Bi-directional net meter'
+    : '3 Phase Metal Meter Box to house the Bi-directional net meter';
+  var meterBoxBrand = is1ph ? 'Syntex' : 'Reputed';
+  var acdbDesc = is1ph ? 'ACDB 1-Ph' : 'ACDB 3-Ph';
+  var acSpdDesc = is1ph ? 'AC <span class="bom-abbr" data-tip="Surge Protection Device" title="Surge Protection Device">SPD<i class="ri-information-line bom-info-icon"></i></span> DS240S-280 (1-ph)' : 'AC <span class="bom-abbr" data-tip="Surge Protection Device" title="Surge Protection Device">SPD<i class="ri-information-line bom-info-icon"></i></span> DS440S-280/G (3-ph)';
+  var mcbDesc   = is1ph ? 'AC <span class="bom-abbr" data-tip="Miniature Circuit Breaker" title="Miniature Circuit Breaker">MCB<i class="ri-information-line bom-info-icon"></i></span> 25A 2 Pole' : 'AC <span class="bom-abbr" data-tip="Miniature Circuit Breaker" title="Miniature Circuit Breaker">MCB<i class="ri-information-line bom-info-icon"></i></span> 25A 4 Pole';
+  var meterReadingDesc = is1ph ? 'DISCOM Meter Reading Sheet 1 Phase' : 'DISCOM Meter Reading Sheet 3 Phase';
+
+  // Structure description based on selected roof type
+  var structureDesc = roof==='hdgi'
+    ? 'Hot-dipped Galvanized Iron structures with 2m of front elevation and anchored to the floor using SS-304 anchor bolts'
+    : 'Mill-finished Aluminium 6063-T6 corrosion-resistant structures with 10 degree tilt, 1m height for back column and 40kg concrete ballast for each column';
+
+  var rows=[];
+
+  // Helper: wrap an abbreviation with an info tooltip
+  function tip(abbr,full){
+    return '<span class="bom-abbr" data-tip="'+full+'" title="'+full+'">'+abbr+'<i class="ri-information-line bom-info-icon"></i></span>';
+  }
+
+  // ── 1. SOLAR PANELS ──
+  rows.push({c:'Solar Panels',b:'Adani/Waaree',d:'545Wp Mono PERC DCR Solar Panels',q:panelQty});
+
+  // ── 2. INVERTER & ACCESSORIES ──
+  if(inv==='solaredge'){
+    // SolarEdge has Optimisers + dedicated mounting hardware
+    var optQty = panels>0 ? panels+' nos' : 'Per panel';
+    var mc4QtySE = panels>0 ? ((panels*2)+(panels-1)+1+1+3)+' nos' : '6 nos';
+    var optHwQty = panels>0 ? panels+' nos' : 'Per panel';
+    var optHwQtyP5 = panels>0 ? (panels+5)+' nos' : 'Per panel + 5';
+    rows.push({c:'Inverter & Accessories',b:'SolarEdge',d:invDesc,q:invQty});
+    rows.push({c:'Inverter & Accessories',b:'SolarEdge',d:'Optimiser S1000 (I/P 1.3 Mtr)',q:optQty});
+    rows.push({c:'Inverter & Accessories',b:'Dhash',d:'MC4 Panel Connectors w/ Lugs',q:mc4QtySE});
+    rows.push({c:'Inverter & Accessories',b:'Reputed',d:'Hex Bolt M8x16 mm',q:optHwQty});
+    rows.push({c:'Inverter & Accessories',b:'Reputed',d:'Hex Nut M8',q:optHwQtyP5});
+    rows.push({c:'Inverter & Accessories',b:'Reputed',d:'Spring Washer M8',q:optHwQtyP5});
+    rows.push({c:'Inverter & Accessories',b:'Reputed',d:'Plain Washer M8',q:optHwQtyP5});
+  } else if(inv==='enphase'){
+    // Enphase: IQ8P Micros, Q Cable, Branch Terminator, IQ Gateway, IQ-Relay
+    var microQty = panels>0 ? panels+' nos' : 'Per panel';
+    var qCableQty = panels>0 ? panels+' nos' : 'Per panel';
+    var branchTermQty = panels>0 ? (panels<7 ? '1 no' : '2 nos') : '1 no';
+    var mc4QtyEN = panels>0 ? ((panels*2)+6)+' nos' : '6 nos';
+    var enHwQty = panels>0 ? panels+' nos' : 'Per panel';
+    var enHwQtyP5 = panels>0 ? (panels+5)+' nos' : 'Per panel + 5';
+    rows.push({c:'Inverter & Accessories',b:'Enphase',d:'IQ8P Microinverter',q:microQty});
+    rows.push({c:'Inverter & Accessories',b:'Enphase',d:'Q Cable',q:qCableQty});
+    rows.push({c:'Inverter & Accessories',b:'Enphase',d:'Branch Terminator (termination of Q cable for each branch ckt)',q:branchTermQty});
+    rows.push({c:'Inverter & Accessories',b:'Enphase',d:'IQ Gateway Metered ENV-S-WM-230 with 2 CT',q:'1 no'});
+    rows.push({c:'Inverter & Accessories',b:'Enphase',d:'IQ-RELAY-3P-INT',q:'1 no'});
+    rows.push({c:'Inverter & Accessories',b:'Dhash',d:'MC4 Panel Connectors w/ Lugs',q:mc4QtyEN});
+    rows.push({c:'Inverter & Accessories',b:'Reputed',d:'Hex Bolt M8x16 mm',q:enHwQty});
+    rows.push({c:'Inverter & Accessories',b:'Reputed',d:'Hex Nut M8',q:enHwQtyP5});
+    rows.push({c:'Inverter & Accessories',b:'Reputed',d:'Spring Washer M8',q:enHwQtyP5});
+    rows.push({c:'Inverter & Accessories',b:'Reputed',d:'Plain Washer M8',q:enHwQtyP5});
+  } else {
+    rows.push({c:'Inverter & Accessories',b:invBrand,d:invDesc,q:invQty});
+    rows.push({c:'Inverter & Accessories',b:mc4Brand,d:'MC4 Panel Connectors w/ Lugs',q:'6 nos'});
+  }
+
+  // ── 3. DC DISTRIBUTION BOX (DCDB) ── (not applicable for Enphase)
+  if(inv!=='enphase'){
+    rows.push({c:'DC Distribution Box (DCDB)',b:'Reputed',d:'DCDB with DC '+tip('SPD','Surge Protection Device')+' & DC '+tip('MCB','Miniature Circuit Breaker')+' or DC Isolator + Fuses',q:'1 no'});
+  }
+
+  // ── 4. MODULE MOUNTING STRUCTURES ──
+  rows.push({c:'Module Mounting Structures',b:'Reputed',d:structureDesc,q:'1 set'});
+  if(roof==='flat'){
+    rows.push({c:'Module Mounting Structures',b:'Fosroc',d:'Nitobond - Concrete to Concrete Bonding Agent/Adhesive (1N x 617ml & 1N x 383ml) 1 LTR',q:'1 set'});
+  }
+
+  // ── 5. METER CUBICLE / AC DISTRIBUTION BOX (ACDB) ──
+  rows.push({c:'Meter Cubicle/AC Distribution Box (ACDB)',b:meterBoxBrand,d:meterBoxDesc,q:'1 no'});
+  rows.push({c:'Meter Cubicle/AC Distribution Box (ACDB)',b:'Reputed',d:acdbDesc,q:'1 no'});
+  rows.push({c:'Meter Cubicle/AC Distribution Box (ACDB)',b:'PTG',d:acSpdDesc,q:'1 no'});
+  if(inv==='enphase'){
+    // Enphase uses 16A (line) + 10A (gateway) MCBs instead of 25A
+    rows.push({c:'Meter Cubicle/AC Distribution Box (ACDB)',b:'Indoasian/Chint',d:'AC <span class="bom-abbr" data-tip="Miniature Circuit Breaker" title="Miniature Circuit Breaker">MCB<i class="ri-information-line bom-info-icon"></i></span> 16A 2 Pole (for line)',q:'1 no'});
+    rows.push({c:'Meter Cubicle/AC Distribution Box (ACDB)',b:'Indoasian/Chint',d:'AC <span class="bom-abbr" data-tip="Miniature Circuit Breaker" title="Miniature Circuit Breaker">MCB<i class="ri-information-line bom-info-icon"></i></span> 10A 2 Pole (for IQ Gateway)',q:'1 no'});
+  } else {
+    rows.push({c:'Meter Cubicle/AC Distribution Box (ACDB)',b:'Indoasian/Chint',d:mcbDesc,q:'2 nos'});
+  }
+  rows.push({c:'Meter Cubicle/AC Distribution Box (ACDB)',b:'Connectwell',d:'Connector End',q:inv==='enphase'?'10 nos':'5 nos'});
+  rows.push({c:'Meter Cubicle/AC Distribution Box (ACDB)',b:'Connectwell',d:'Connector N10',q:'1 no'});
+
+  if(inv==='solaredge'){
+    // SolarEdge: same section structure as String, with SolarEdge-specific items
+    // ── AC CABLES AND CONDUITS ──
+    rows.push({c:'AC Cables and Conduits',b:'Polycab/Finolex',d:'Cu Flexible AC Cable 2.5sq.mm/4sq.mm/6sq.mm',q:'50 Mtr'});
+    rows.push({c:'AC Cables and Conduits',b:'Precision',d:tip('UPVC','Unplasticized Polyvinyl Chloride')+' Pipe with Bend, Collar, Quick Clamp, Elbow (AC) 20mm/32mm',q:'50 Mtr'});
+
+    // ── DC CABLES AND CONDUITS ──
+    var dcCableLenSE = panels>0 ? (Math.round(panels*1.2*10)/10)+' Mtr' : '50 Mtr';
+    rows.push({c:'DC Cables and Conduits',b:'Polycab',d:'1 Core x 4 sq.mm (Black) DC Cable (Panel↔Optimiser & Optimiser↔DCDB)',q:dcCableLenSE});
+    rows.push({c:'DC Cables and Conduits',b:'Polycab',d:'1 Core x 4 sq.mm (Red) DC Cable (Panel↔Optimiser & Optimiser↔DCDB)',q:dcCableLenSE});
+    rows.push({c:'DC Cables and Conduits',b:'Precision',d:tip('UPVC','Unplasticized Polyvinyl Chloride')+' Pipe with Bend, Collar, Quick Clamp, Elbow (DC) 20mm/32mm',q:'50 Mtr'});
+
+    // ── EARTHING ──
+    rows.push({c:'Earthing',b:'Excel Earthing',d:'Earthing: Full Kit',q:'3 nos'});
+    rows.push({c:'Earthing',b:'Excel Earthing',d:'Earthing: Chamber PVC',q:'3 nos'});
+    rows.push({c:'Earthing',b:'Excel Earthing',d:'Lightning Arrester: Conventional 1 Mtr',q:'1 no'});
+    rows.push({c:'Earthing',b:'Polycab',d:'DC Earthing: Down conductor 16 sq.mm cable White Aluminum',q:'50 Mtr'});
+    rows.push({c:'Earthing',b:'Polycab',d:'AC Earthing: Down conductor 16 sq.mm cable White Aluminum',q:'50 Mtr'});
+    rows.push({c:'Earthing',b:'Polycab',d:'LA Earthing: Down conductor 16 sq.mm cable White Aluminum',q:'50 Mtr'});
+    rows.push({c:'Earthing',b:'Reputed',d:'Earthing: Clamp Metal Stainless Steel',q:'55 nos'});
+    rows.push({c:'Earthing',b:'Polycab',d:'1 Core x 6 sq.mm (Green) Cu Flexible Earthing Cable',q:'10 Mtr'});
+    rows.push({c:'Earthing',b:'Reputed',d:'Hex Bolt M8x25 mm',q:'7 nos'});
+    rows.push({c:'Earthing',b:'Reputed',d:'Hex Nut M8',q:'7 nos'});
+    rows.push({c:'Earthing',b:'Reputed',d:'Spring Washer M8',q:'7 nos'});
+    rows.push({c:'Earthing',b:'Reputed',d:'Plain Washer M8',q:'7 nos'});
+
+    // ── CABLE LUGS ──
+    rows.push({c:'Cable Lugs',b:'Reputed',d:'End Sleeve Copper 4 sq.mm for '+tip('SPD','Surge Protection Device')+' and AC Earthing',q:'30 nos'});
+    rows.push({c:'Cable Lugs',b:'Reputed',d:'Twin Ferrules Cu 4 sq.mm',q:'4 nos'});
+    rows.push({c:'Cable Lugs',b:'Reputed',d:'End Sleeve 6 sq.mm Copper',q:'5 nos'});
+    rows.push({c:'Cable Lugs',b:'Reputed',d:'RJ45 Connector',q:'2 nos'});
+    rows.push({c:'Cable Lugs',b:'Reputed',d:'Ring Lugs 6x8 mm Copper',q:'3 nos'});
+    rows.push({c:'Cable Lugs',b:'Reputed',d:'Ring Lugs 10x8 mm Cu',q:'10 nos'});
+  } else if(inv==='enphase'){
+    // Enphase: DC cables based on panel count (panels * 1.2 mtr each)
+    var dcCableLenEN = panels>0 ? (Math.round(panels*1.2*10)/10)+' Mtr' : '50 Mtr';
+    // ── AC CABLES AND CONDUITS ──
+    rows.push({c:'AC Cables and Conduits',b:'Polycab/Finolex',d:'Cu Flexible AC Cable 2.5sq.mm/4sq.mm/6sq.mm',q:'50 Mtr'});
+    rows.push({c:'AC Cables and Conduits',b:'Precision',d:tip('UPVC','Unplasticized Polyvinyl Chloride')+' Pipe with Bend, Collar, Quick Clamp, Elbow (AC) 20mm/32mm',q:'50 Mtr'});
+
+    // ── DC CABLES AND CONDUITS ──
+    rows.push({c:'DC Cables and Conduits',b:'Polycab/Siechem',d:'1 Core x 4 sq.mm (Black) DC Cable',q:dcCableLenEN});
+    rows.push({c:'DC Cables and Conduits',b:'Polycab/Siechem',d:'1 Core x 4 sq.mm (Red) DC Cable',q:dcCableLenEN});
+    rows.push({c:'DC Cables and Conduits',b:'Precision',d:tip('UPVC','Unplasticized Polyvinyl Chloride')+' Pipe with Bend, Collar, Quick Clamp, Elbow (DC) 20mm/32mm',q:'50 Mtr'});
+
+    // ── EARTHING ──
+    rows.push({c:'Earthing',b:'Excel Earthing',d:'Earthing: Full Kit 14.2 mm x 1.2 m 100 mic 10 kG',q:'3 nos'});
+    rows.push({c:'Earthing',b:'Excel Earthing',d:'Earthing: Chamber PVC',q:'3 nos'});
+    rows.push({c:'Earthing',b:'Excel Earthing',d:'Lightning Arrester: Conventional 1 Mtr',q:'1 no'});
+    rows.push({c:'Earthing',b:'Polycab',d:'AC Earthing: Down conductor 16 sq.mm cable White Aluminum (Structure + AC + LA)',q:'50 Mtr'});
+    rows.push({c:'Earthing',b:'Reputed',d:'Earthing: Clamp 16 sq.mm Metal Stainless Steel',q:'55 nos'});
+    rows.push({c:'Earthing',b:'Polycab',d:'1 Core x 6 sq.mm (Green) Cu Flexible Earthing Cable (for AC SPD)',q:'5 Mtr'});
+    rows.push({c:'Earthing',b:'Reputed',d:'Hex Bolt M8x25 mm',q:'5 nos'});
+    rows.push({c:'Earthing',b:'Reputed',d:'Hex Nut M8',q:'5 nos'});
+    rows.push({c:'Earthing',b:'Reputed',d:'Spring Washer M8',q:'5 nos'});
+    rows.push({c:'Earthing',b:'Reputed',d:'Plain Washer M8',q:'5 nos'});
+
+    // ── CABLE LUGS ──
+    rows.push({c:'Cable Lugs',b:'Reputed',d:'End Sleeve 4 sq.mm Copper (AC cable end lugs)',q:'30 nos'});
+    rows.push({c:'Cable Lugs',b:'Reputed',d:'End Sleeve 6 sq.mm Copper (for '+tip('SPD','Surge Protection Device')+')',q:'2 nos'});
+    rows.push({c:'Cable Lugs',b:'Reputed',d:'Twin Ferrules 4 sq.mm Cu (for '+tip('SPD','Surge Protection Device')+', IQ Gateway)',q:'15 nos'});
+    rows.push({c:'Cable Lugs',b:'Reputed',d:'RJ45 Connector',q:'2 nos'});
+    rows.push({c:'Cable Lugs',b:'Reputed',d:'Ring Lugs 6x8 mm Copper (body & SPD earthing)',q:'3 nos'});
+    rows.push({c:'Cable Lugs',b:'Reputed',d:'Ring Lugs 10x8 mm Cu (structure earthing)',q:'10 nos'});
+  } else {
+    // String: split AC and DC sections
+    // ── AC CABLES AND CONDUITS ──
+    rows.push({c:'AC Cables and Conduits',b:'Polycab/Finolex',d:'Cu Flexible AC Cable 2.5sq.mm/4sq.mm/6sq.mm',q:'50 Mtr'});
+    rows.push({c:'AC Cables and Conduits',b:'Precision',d:tip('UPVC','Unplasticized Polyvinyl Chloride')+' Pipe with Bend, Collar, Quick Clamp, Elbow (AC) 20mm/32mm',q:'50 Mtr'});
+
+    // ── DC CABLES AND CONDUITS ──
+    rows.push({c:'DC Cables and Conduits',b:'Polycab/Siechem',d:'DC Cable (Red & Black) 4 sq.mm',q:'100 Mtr'});
+    rows.push({c:'DC Cables and Conduits',b:'Precision',d:tip('UPVC','Unplasticized Polyvinyl Chloride')+' Pipe with Bend, Collar, Quick Clamp, Elbow (DC) 20mm/32mm',q:'50 Mtr'});
+
+    // ── EARTHING ──
+    rows.push({c:'Earthing',b:'Excel Earthing',d:'Earthing: Full Kit',q:'3 nos'});
+    rows.push({c:'Earthing',b:'Excel Earthing',d:'Earthing: Chamber PVC',q:'3 nos'});
+    rows.push({c:'Earthing',b:'Excel Earthing',d:'Lightning Arrester: Conventional 1 Mtr',q:'1 no'});
+    rows.push({c:'Earthing',b:'Polycab',d:'DC Earthing: Down conductor 16 sq.mm cable White Aluminum',q:'50 Mtr'});
+    rows.push({c:'Earthing',b:'Polycab',d:'AC Earthing: Down conductor 16 sq.mm cable White Aluminum',q:'50 Mtr'});
+    rows.push({c:'Earthing',b:'Polycab',d:'LA Earthing: Down conductor 16 sq.mm cable White Aluminum',q:'50 Mtr'});
+    rows.push({c:'Earthing',b:'Reputed',d:'Earthing: Clamp Metal Stainless Steel',q:'55 nos'});
+    rows.push({c:'Earthing',b:'Polycab',d:'1 Core x 6 sq.mm (Green) Cu Flexible Earthing Cable',q:'10 Mtr'});
+    rows.push({c:'Earthing',b:'Reputed',d:'Hex Bolt M8x25 mm',q:'7 nos'});
+    rows.push({c:'Earthing',b:'Reputed',d:'Hex Nut M8',q:'7 nos'});
+    rows.push({c:'Earthing',b:'Reputed',d:'Spring Washer M8',q:'7 nos'});
+    rows.push({c:'Earthing',b:'Reputed',d:'Plain Washer M8',q:'7 nos'});
+
+    // ── CABLE LUGS ──
+    rows.push({c:'Cable Lugs',b:'Reputed',d:'End Sleeve Copper 4 sq.mm for '+tip('SPD','Surge Protection Device')+' and AC Earthing',q:'20 nos'});
+    rows.push({c:'Cable Lugs',b:'Reputed',d:'Twin Ferrules Cu 4 sq.mm',q:'5 nos'});
+    rows.push({c:'Cable Lugs',b:'Reputed',d:'End Sleeve 6 sq.mm Copper',q:'5 nos'});
+    rows.push({c:'Cable Lugs',b:'Reputed',d:'Ring Lugs 6x8 mm Copper',q:'3 nos'});
+    rows.push({c:'Cable Lugs',b:'Reputed',d:'Ring Lugs 10x8 mm Cu',q:'10 nos'});
+  }
+
+  // ── OTHERS (unchanged) ──
+  rows.push({c:'Others',b:'TP-Link',d:'Solar Monitoring: TP-Link 855RE Wifi Range Extender with 2 Antenna',q:'1 no'});
+  rows.push({c:'Others',b:'Reputed',d:'SOLAR PANEL CLEANING MOP',q:'1 no'});
+  rows.push({c:'Others',b:'Batla',d:'Ladder (5.5 ft Height)',q:'1 no'});
+  rows.push({c:'Others',b:'Reputed',d:'Self Threaded Screw 1 Inch GI',q:'20 nos'});
+  rows.push({c:'Others',b:'Reputed',d:'Self Tapping Screw 0.5 Inch SS304',q:'6 nos'});
+  rows.push({c:'Others',b:'Reputed',d:'Self Tapping Screw 1.5 Inch SS304',q:'165 nos'});
+  rows.push({c:'Others',b:'Reputed',d:'Wall plug M6x30',q:'165 nos'});
+  rows.push({c:'Others',b:'Reputed',d:'Plain Washer M5',q:'165 nos'});
+  rows.push({c:'Others',b:'Reputed',d:'Hex coach screw M8x50 mm',q:'8 nos'});
+  rows.push({c:'Others',b:'Reputed',d:'Wall Plug M10x50',q:'8 nos'});
+  rows.push({c:'Others',b:'Steelgrip',d:'Insulation Tape Red',q:'1 no'});
+  rows.push({c:'Others',b:'Steelgrip',d:'Insulation Tape Green',q:'1 no'});
+  rows.push({c:'Others',b:'Steelgrip',d:'Insulation Tape Black',q:'1 no'});
+  if(!is1ph && inv!=='enphase'){
+    rows.push({c:'Others',b:'Steelgrip',d:'Insulation Tape Yellow',q:'1 no'});
+    rows.push({c:'Others',b:'Steelgrip',d:'Insulation Tape Blue',q:'1 no'});
+  }
+  rows.push({c:'Others',b:'Wacker',d:'Silicon Clear (G P Wacker)',q:'1 no'});
+  var cableTieQty = inv==='enphase' ? (panels>0 ? ((panels*5)+20)+' nos' : '25 nos') : '25 nos';
+  rows.push({c:'Others',b:'Reputed',d:'Cable tie 295 mm Black',q:cableTieQty});
+  rows.push({c:'Others',b:'Reputed',d:'Din Mounting Rail',q:'0.5 m'});
+  rows.push({c:'Others',b:'Reputed',d:'Stickers',q:'1 set'});
+  rows.push({c:'Others',b:'Reputed',d:'Cleaning System: Water draining Clamp for Solar Panel 35mm',q:'38 nos'});
+  rows.push({c:'Others',b:'Reputed',d:meterReadingDesc,q:'1 no'});
+
   return rows;
 }
 
@@ -1920,28 +2127,79 @@ function renderResults(r,tiers,kwp){
           '</table>'+
         '</div>'+
       '</div>'+
-    '</div>'+
-    '<div class="act-btns">'+
-    '<button class="act-btn s" id="view-sld-btn" onclick="switchTab(\'sld\')">🔌 View SLD</button>'+
-    '<a href="https://ecosoch.com/getquote" target="_blank" rel="noopener" class="act-btn" style="background:linear-gradient(135deg,#1A3A5C,#2B5FA1);color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ri-arrow-right-circle-fill"></i> Get Quote</a>'+
-  '</div>';
+    '</div>';
 }
 
 function renderBOM(){
   var inv=CR?CR.inv:'string';
+
+  // SolarEdge not supported below 3 kWp — hide BOM with a warning
+  if(CR && inv==='solaredge' && CR.kwp < 3){
+    var capWrap0=document.getElementById('bom-capacity');
+    if(capWrap0) capWrap0.style.display='none';
+    document.getElementById('bom-filters').innerHTML='';
+    document.getElementById('bom-body').innerHTML='<tr><td colspan="4" style="padding:0">'
+      +'<div style="margin:24px 8px;padding:24px 22px;background:linear-gradient(135deg,#FEE2E2 0%,#FECACA 100%);border:1px solid #F87171;border-left:5px solid #DC2626;border-radius:14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">'
+      +'<div style="font-size:2rem">⚠️</div>'
+      +'<div style="flex:1;min-width:240px">'
+      +'<div style="color:#7F1D1D;font-weight:800;font-size:1rem;margin-bottom:4px">SolarEdge BOM Not Available</div>'
+      +'<div style="color:#991B1B;font-size:.86rem;font-weight:600;line-height:1.5">SolarEdge design is not supported for systems below 3 kWp. Please choose a system size of 3 kWp or higher, or select a different inverter type (String / Enphase) to view the Bill of Materials.</div>'
+      +'</div>'
+      +'<span style="background:#DC2626;color:#fff;padding:7px 14px;border-radius:999px;font-weight:800;font-size:.78rem;letter-spacing:.3px;white-space:nowrap">✗ NOT AVAILABLE</span>'
+      +'</div>'
+      +'</td></tr>';
+    return;
+  }
+
   var data=getBOM(inv);
+
+  // System Capacity badge
+  var capWrap=document.getElementById('bom-capacity');
+  var capVal=document.getElementById('bom-capacity-value');
+  var invVal=document.getElementById('bom-inverter-value');
+  var roofVal=document.getElementById('bom-roof-value');
+  if(CR && capWrap){
+    capVal.textContent=CR.kwp.toFixed(2)+' kWp';
+    var invLbl=CR.inv==='string'?'String Inverter':(CR.inv==='solaredge'?'SolarEdge':'Enphase Microinverter');
+    if(invVal)invVal.textContent=invLbl;
+    var roofLbl=(CR.roof==='hdgi')?'HDGI Elevated':'Flat Roof';
+    if(roofVal)roofVal.textContent=roofLbl;
+    capWrap.style.display='block';
+  } else if(capWrap){
+    capWrap.style.display='none';
+  }
+
   var cats=['All'].concat(Array.from(new Set(data.map(function(r){return r.c;}))));
   document.getElementById('bom-filters').innerHTML=cats.map(function(c){
     return '<button class="bom-btn '+(bomFilter===c?'active':'')+'" onclick="setBomFilter(\''+c+'\')">'+c+'</button>';
   }).join('');
   var fil=bomFilter==='All'?data:data.filter(function(r){return r.c===bomFilter;});
+
+  // Section header colors — distinct color per section
+  var sectionColors={
+    'Solar Panels':              {bg:'#FEF3C7',fg:'#78350F'}, // amber
+    'Inverter & Accessories':    {bg:'#DBEAFE',fg:'#1E3A8A'}, // blue
+    'DC Distribution Box':       {bg:'#E0E7FF',fg:'#3730A3'}, // indigo
+    'Module Mounting Structures':{bg:'#D1FAE5',fg:'#065F46'}, // emerald
+    'Meter Cubicle/ACDB':        {bg:'#FCE7F3',fg:'#9D174D'}, // pink
+    'AC Cables and Conduits':    {bg:'#FEE2E2',fg:'#991B1B'}, // red
+    'DC Cables and Conduits':    {bg:'#FFEDD5',fg:'#9A3412'}, // orange
+    'Earthing':                  {bg:'#CCFBF1',fg:'#115E59'}, // teal
+    'Cable Lugs':                {bg:'#EDE9FE',fg:'#5B21B6'}, // violet
+    'Others':                    {bg:'#F1F5F9',fg:'#334155'}  // slate
+  };
+  var defaultSectionColor={bg:'#F4CCCC',fg:'#1F2937'};
+
   var h='',cur=null,i=1;
   fil.forEach(function(r){
-    if(r.c!==cur){cur=r.c;h+='<tr style="background:#fffbeb"><td colspan="4" style="padding:9px 13px;font-weight:800;font-size:.7rem;text-transform:uppercase;color:#0f172a;letter-spacing:.04em">'+r.c+'</td></tr>';}
-    h+='<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:9px 13px;color:#64748b;font-weight:600">'+i+'</td><td style="padding:9px 13px;color:#64748b;font-size:.82rem">'+r.c+'</td><td style="padding:9px 13px;font-weight:600">'+r.d+'</td><td style="padding:9px 13px;text-align:right;font-weight:700">'+r.q+'</td></tr>';
+    if(r.c!==cur){
+      cur=r.c;
+      var col=sectionColors[r.c]||defaultSectionColor;
+      h+='<tr style="background:'+col.bg+'"><td colspan="4" style="padding:11px 14px;font-weight:800;font-size:.88rem;color:'+col.fg+';letter-spacing:.01em;border-top:1px solid #d1d5db;border-bottom:1px solid #d1d5db;text-align:center">Section: '+r.c+'</td></tr>';
+    }
+    h+='<tr style="border-bottom:1px solid #e5e7eb;background:#fff"><td style="padding:9px 13px;color:#64748b;font-weight:600;border-right:1px solid #f1f5f9">'+i+'</td><td style="padding:9px 13px;color:#475569;font-size:.82rem;font-weight:700;border-right:1px solid #f1f5f9">'+(r.b||'—')+'</td><td style="padding:9px 13px;font-weight:600;color:#0f172a;border-right:1px solid #f1f5f9">'+r.d+'</td><td style="padding:9px 13px;text-align:right;font-weight:700;color:#0f172a">'+r.q+'</td></tr>';
     i++;
   });
-  h+='<tr style="background:#f0fdf4"><td colspan="3" style="padding:10px 13px;font-weight:800;color:#166534">Total line items</td><td style="padding:10px 13px;text-align:right;font-weight:800;color:#166534">'+fil.length+'</td></tr>';
   document.getElementById('bom-body').innerHTML=h;
 }
 function setBomFilter(c){bomFilter=c;renderBOM();}
@@ -1949,6 +2207,21 @@ function setBomFilter(c){bomFilter=c;renderBOM();}
 function renderSLD(){
   var wrap=document.getElementById('sld-wrap'),conf=document.getElementById('sld-config');
   if(!CR){wrap.innerHTML='<div class="empty"><div class="icon">🔌</div><p>Run the calculator first</p></div>';conf.textContent='Configure in Calculator tab';return;}
+
+  // SolarEdge not supported below 3 kWp — hide SLD with the same warning as BOM
+  if(CR.inv==='solaredge' && CR.kwp < 3){
+    conf.textContent='SolarEdge requires ≥ 3 kWp';
+    wrap.innerHTML='<div style="margin:24px 8px;padding:24px 22px;background:linear-gradient(135deg,#FEE2E2 0%,#FECACA 100%);border:1px solid #F87171;border-left:5px solid #DC2626;border-radius:14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">'
+      +'<div style="font-size:2rem">⚠️</div>'
+      +'<div style="flex:1;min-width:240px">'
+      +'<div style="color:#7F1D1D;font-weight:800;font-size:1rem;margin-bottom:4px">SolarEdge SLD Not Available</div>'
+      +'<div style="color:#991B1B;font-size:.86rem;font-weight:600;line-height:1.5">SolarEdge design is not supported for systems below 3 kWp. Please choose a system size of 3 kWp or higher, or select a different inverter type (String / Enphase) to view the Single Line Diagram.</div>'
+      +'</div>'
+      +'<span style="background:#DC2626;color:#fff;padding:7px 14px;border-radius:999px;font-weight:800;font-size:.78rem;letter-spacing:.3px;white-space:nowrap">✗ NOT AVAILABLE</span>'
+      +'</div>';
+    return;
+  }
+
   conf.textContent='';
   if(CR.inv==='string')wrap.innerHTML=sldString();
   else if(CR.inv==='solaredge')wrap.innerHTML=sldSE();
@@ -2466,7 +2739,7 @@ function updateInvTooltip(sel) {
   var tags = {
     string:    'Conventional · Cost effective',
     solaredge: 'Value for money system',
-    enphase:   'Premium Pricing System'
+    enphase:   'Premium Grade System'
   };
   var colors = {
     string:    {bg:'#E8F5E9', color:'#2E7D52'},
@@ -2485,6 +2758,149 @@ function updateInvTooltip(sel) {
 
 
 renderBOM();
+
+// Scroll-to-top button — visible on Calculator and BOM tabs
+(function(){
+  // Inject CSS animations
+  var st=document.createElement('style');
+  st.textContent='@keyframes stb-pop{0%{transform:translateY(20px) scale(.5);opacity:0}60%{transform:translateY(-6px) scale(1.08)}100%{transform:translateY(0) scale(1);opacity:1}}'
+    +'@keyframes stb-pulse{0%,100%{box-shadow:0 6px 20px rgba(14,165,233,0.4),0 0 0 0 rgba(14,165,233,0.5)}50%{box-shadow:0 6px 22px rgba(14,165,233,0.5),0 0 0 12px rgba(14,165,233,0)}}'
+    +'@keyframes stb-arrow{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}'
+    +'#scroll-top-btn{animation:stb-pop .45s cubic-bezier(.34,1.56,.64,1) both,stb-pulse 2.4s ease-in-out infinite .5s}'
+    +'#scroll-top-btn i{display:inline-block;animation:stb-arrow 1.6s ease-in-out infinite}'
+    +'#scroll-top-btn:hover{transform:translateY(-4px) scale(1.08)!important}'
+    +'#scroll-top-btn:active{transform:translateY(-1px) scale(.96)!important}';
+  document.head.appendChild(st);
+
+  var btn=document.createElement('button');
+  btn.id='scroll-top-btn';
+  btn.setAttribute('aria-label','Scroll to top');
+  btn.innerHTML='<i class="ri-arrow-up-line"></i>';
+  btn.style.cssText='position:fixed;bottom:24px;right:24px;width:52px;height:52px;border:none;border-radius:50%;background:linear-gradient(135deg,#0EA5E9 0%,#3B82F6 100%);color:#fff;font-size:1.5rem;cursor:pointer;z-index:999;display:none;align-items:center;justify-content:center;transition:transform .25s cubic-bezier(.34,1.56,.64,1);';
+  btn.onclick=function(){window.scrollTo({top:0,behavior:'smooth'});};
+  document.body.appendChild(btn);
+
+  function update(){
+    var calcActive=document.getElementById('tab-calculator')&&document.getElementById('tab-calculator').classList.contains('active');
+    var bomActive=document.getElementById('tab-bom')&&document.getElementById('tab-bom').classList.contains('active');
+    var allowedTab=calcActive||bomActive;
+    var scrolled=window.scrollY>300;
+    if(allowedTab && scrolled){
+      if(btn.style.display!=='flex'){
+        btn.style.display='flex';
+        btn.style.animation='none';
+        btn.offsetHeight;
+        btn.style.animation='';
+      }
+    } else {
+      btn.style.display='none';
+    }
+  }
+  window.addEventListener('scroll',update,{passive:true});
+  document.querySelectorAll('.tab').forEach(function(t){t.addEventListener('click',function(){setTimeout(update,50);});});
+  update();
+})();
+
+// Floating right-side action panel — shows OTHER tabs + Get Quote
+(function(){
+  var st2=document.createElement('style');
+  st2.textContent='@keyframes fap-slide{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}'
+    +'#float-actions{position:fixed;top:50%;right:0;transform:translateY(-50%);z-index:95;display:none;flex-direction:column;gap:10px;}'
+    +'#float-actions.show{display:flex;animation:fap-slide .5s cubic-bezier(.34,1.56,.64,1) both;}'
+    +'.fap-btn{display:flex;align-items:center;gap:12px;padding:11px 22px 11px 11px;border:none;border-top-left-radius:50px;border-bottom-left-radius:50px;border-top-right-radius:0;border-bottom-right-radius:0;cursor:pointer;text-decoration:none;font-weight:800;font-size:.95rem;color:#fff;letter-spacing:.3px;box-shadow:0 6px 18px rgba(15,23,42,.22);transition:transform .2s,box-shadow .2s;min-width:180px;}'
+    +'.fap-btn:hover{transform:translateX(-4px) scale(1.02);box-shadow:0 10px 24px rgba(15,23,42,.28);}'
+    +'.fap-btn:active{transform:translateX(-2px) scale(.98);}'
+    +'.fap-btn .fap-icon{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#fff;flex-shrink:0;}'
+    +'.fap-btn-calc{background:linear-gradient(135deg,#F59E0B 0%,#EA580C 100%);}'
+    +'.fap-btn-bom{background:linear-gradient(135deg,#0EA5E9 0%,#3B82F6 100%);}'
+    +'.fap-btn-sld{background:linear-gradient(135deg,#0F2B45 0%,#1A3A5C 100%);}'
+    +'.fap-btn-quote{background:linear-gradient(135deg,#1A3A5C 0%,#2B5FA1 100%);}'
+    +'@media(max-width:1024px){#float-actions{top:auto;bottom:84px;right:0;transform:none;align-items:flex-end;}.fap-btn{min-width:160px;padding:10px 18px 10px 10px;font-size:.85rem;}.fap-btn .fap-icon{width:32px;height:32px;font-size:1rem;}}'
+    +'@media(max-width:560px){.fap-btn span.fap-label{display:none;}.fap-btn{padding:10px;border-radius:50%;min-width:0;}.fap-btn .fap-icon{margin:0;}}';
+  document.head.appendChild(st2);
+
+  var wrap=document.createElement('div');
+  wrap.id='float-actions';
+  document.body.appendChild(wrap);
+
+  // Define every possible action (key -> button HTML factory)
+  function btn(cls,onclick,iconClass,label){
+    return '<button class="fap-btn '+cls+'" type="button" onclick="'+onclick+'" aria-label="'+label+'">'
+      +'<span class="fap-icon"><i class="'+iconClass+'"></i></span>'
+      +'<span class="fap-label">'+label+'</span>'
+    +'</button>';
+  }
+  function lnk(cls,href,iconClass,label,target){
+    var t=target?(' target="'+target+'" rel="noopener"'):'';
+    return '<a class="fap-btn '+cls+'" href="'+href+'"'+t+' aria-label="'+label+'">'
+      +'<span class="fap-icon"><i class="'+iconClass+'"></i></span>'
+      +'<span class="fap-label">'+label+'</span>'
+    +'</a>';
+  }
+
+  var lastTab=null, lastVisible=null;
+
+  function update(){
+    // Determine current tab
+    var curTab=null;
+    if(document.getElementById('tab-calculator')&&document.getElementById('tab-calculator').classList.contains('active'))curTab='calculator';
+    else if(document.getElementById('tab-bom')&&document.getElementById('tab-bom').classList.contains('active'))curTab='bom';
+    else if(document.getElementById('tab-sld')&&document.getElementById('tab-sld').classList.contains('active'))curTab='sld';
+
+    // Visibility rule: only after a calculation has run
+    var visible = (curTab && typeof CR!=='undefined' && CR);
+    // SolarEdge < 3 kWp shouldn't lure users to BOM/SLD
+    var hideOtherViews = (CR && CR.inv==='solaredge' && CR.kwp<3);
+
+    if(!visible){
+      if(wrap.classList.contains('show')){wrap.classList.remove('show');}
+      lastTab=null;lastVisible=false;
+      return;
+    }
+
+    // Re-render only when tab changes (avoid flicker)
+    if(curTab===lastTab && lastVisible===true)return;
+    lastTab=curTab;lastVisible=true;
+
+    var html='';
+    if(curTab==='calculator'){
+      // From Calculator → show BOM, SLD, Get Quote
+      if(!hideOtherViews){
+        html+=btn('fap-btn-bom',"switchTab('bom');window.scrollTo({top:0,behavior:'smooth'});",'ri-list-check-2','View BOM');
+        html+=btn('fap-btn-sld',"switchTab('sld');window.scrollTo({top:0,behavior:'smooth'});",'ri-flow-chart','View SLD');
+      }
+      html+=lnk('fap-btn-quote','https://ecosoch.com/getquote','ri-arrow-right-circle-fill','Get Quote','_blank');
+    } else if(curTab==='bom'){
+      // From BOM → show Calculator, SLD, Get Quote
+      html+=btn('fap-btn-calc',"switchTab('calculator');window.scrollTo({top:0,behavior:'smooth'});",'ri-flashlight-fill','Calculator');
+      if(!hideOtherViews){
+        html+=btn('fap-btn-sld',"switchTab('sld');window.scrollTo({top:0,behavior:'smooth'});",'ri-flow-chart','View SLD');
+      }
+      html+=lnk('fap-btn-quote','https://ecosoch.com/getquote','ri-arrow-right-circle-fill','Get Quote','_blank');
+    } else if(curTab==='sld'){
+      // From SLD → show Calculator, BOM, Get Quote
+      html+=btn('fap-btn-calc',"switchTab('calculator');window.scrollTo({top:0,behavior:'smooth'});",'ri-flashlight-fill','Calculator');
+      if(!hideOtherViews){
+        html+=btn('fap-btn-bom',"switchTab('bom');window.scrollTo({top:0,behavior:'smooth'});",'ri-list-check-2','View BOM');
+      }
+      html+=lnk('fap-btn-quote','https://ecosoch.com/getquote','ri-arrow-right-circle-fill','Get Quote','_blank');
+    }
+
+    wrap.innerHTML=html;
+    if(!wrap.classList.contains('show')){
+      wrap.classList.add('show');
+    } else {
+      // Re-trigger entrance animation when content changes
+      wrap.style.animation='none';
+      wrap.offsetHeight;
+      wrap.style.animation='';
+    }
+  }
+
+  document.querySelectorAll('.tab').forEach(function(t){t.addEventListener('click',function(){setTimeout(update,50);});});
+  setInterval(update,400);
+  update();
+})();
 </script>
 </body>
 </html>
