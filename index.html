@@ -46,6 +46,12 @@
   .tab{font-weight:700;font-size:.75rem;padding:9px 20px;border-radius:10px;cursor:pointer;border:none;background:transparent;color:#94a3b8;transition:all .2s;text-transform:uppercase;letter-spacing:.04em;}
   .tab.active{background:var(--navy);color:#fff;box-shadow:0 2px 8px rgba(26,58,92,.3);}
   .tab:hover:not(.active){background:#f1f5f9;color:var(--navy);}
+  .tab.tab-revealed{animation:tabReveal .5s cubic-bezier(.34,1.56,.64,1) both;}
+  @keyframes tabReveal{
+    0%{opacity:0;transform:scale(.7);}
+    60%{opacity:1;transform:scale(1.08);}
+    100%{opacity:1;transform:scale(1);}
+  }
   .panel{display:none;}.panel.active{display:block;}
 
   /* ── INPUT CARD ─────────────────────────── */
@@ -285,36 +291,74 @@
     .hero h1{font-size:1.35rem;}
     .hero p{font-size:.82rem;}
     .main{padding:18px 12px;}
-    .tabs{width:100%;justify-content:center;}
-    .tab{font-size:.68rem;padding:8px 14px;}
+    /* Tabs become scrollable horizontal pills on mobile */
+    .tabs{
+      width:100%;
+      justify-content:flex-start;
+      overflow-x:auto;
+      flex-wrap:nowrap;
+      -webkit-overflow-scrolling:touch;
+      scrollbar-width:none;
+    }
+    .tabs::-webkit-scrollbar{display:none;}
+    .tab{font-size:.68rem;padding:9px 14px;flex-shrink:0;white-space:nowrap;}
     .results-grid{grid-template-columns:1fr!important;}
     .kpi{padding:14px 16px;}
     .kpi .val{font-size:1.2rem;}
+    /* Roof preview stays compact */
+    .roof-preview img{aspect-ratio:16/9;}
   }
   @media(max-width:640px){
     .kpi-row{grid-template-columns:1fr 1fr;}
+    .input-card{border-radius:18px;}
     .input-card-body{padding:1rem .9rem;}
-    .two-col{grid-template-columns:1fr!important;}
+    .two-col{grid-template-columns:1fr!important;gap:16px!important;}
     .three-col{grid-template-columns:1fr 1fr!important;}
     .hero h1{font-size:1.2rem;}
     .site-header{padding:0 14px;height:56px;}
     .logo{font-size:1.1rem;}
     .logo-icon{width:28px;height:28px;font-size:.9rem;}
     .header-tag{display:none;}
-    .input-card-title{padding:.9rem 1rem;font-size:.95rem;}
+    .input-card-title{padding:.9rem 1rem;font-size:.95rem;text-align:center;}
     #inverter-row{max-width:100%!important;}
-    .calc-btn{padding:13px 22px;font-size:.88rem;}
+    .calc-btn{padding:13px 22px;font-size:.88rem;width:100%;max-width:340px;}
     .act-btns{flex-direction:column;gap:10px;}
     .act-btns .btn{width:100%;justify-content:center;}
+    /* Inputs touch-friendlier */
+    .custom-input{padding:.75rem .85rem;min-height:54px;border-radius:12px;}
+    .custom-input input,.custom-input select{font-size:.95rem;}
+    .icon-box{width:32px;height:32px;font-size:.85rem;border-radius:9px;}
+    .input-suffix{font-size:.68rem;}
+    .input-label{font-size:.64rem;}
+    /* Inverter row shouldn't have max-width that breaks layout */
+    #inverter-row .custom-input{flex-wrap:wrap;}
+    #inv-tag{margin-left:auto!important;margin-top:6px;font-size:.66rem!important;padding:2px 8px!important;}
   }
-  @media(max-width:420px){
-    .kpi-row{grid-template-columns:1fr 1fr;}
+  @media(max-width:480px){
+    .kpi-row{grid-template-columns:1fr 1fr;gap:10px;}
     .kpi{padding:12px;}
     .kpi .lbl{font-size:.6rem;}
     .kpi .val{font-size:1.05rem;}
     .main{padding:14px 10px;}
     .hero{padding:22px 14px 30px;}
     .hero h1{font-size:1.1rem;}
+    .hero p{font-size:.78rem;line-height:1.45;}
+    /* tabs on very small phones */
+    .tab{font-size:.62rem;padding:8px 12px;letter-spacing:.02em;}
+    .tabs{padding:4px;border-radius:12px;}
+    /* Tooltip width fix - prevent overflow */
+    .tooltip-wrap .tip{width:170px;font-size:.66rem;}
+    /* Section divider */
+    .section-divider{margin:4px 0 12px;}
+    /* Roof preview on phones */
+    .roof-preview img{aspect-ratio:16/10;}
+    /* Inverter row tag wraps on its own line */
+    #inv-tag{width:100%;text-align:center;margin-top:8px!important;}
+  }
+  @media(max-width:380px){
+    .tab{font-size:.58rem;padding:7px 10px;}
+    .input-card-title{font-size:.88rem;}
+    .calc-btn{font-size:.82rem;padding:12px 18px;}
   }
 
   /* ═══════════════════════════════════════════
@@ -1140,10 +1184,10 @@ function ovContinue(){
   </div>
 </div>
 <div class="main">
-  <div class="tabs">
+  <div class="tabs" id="tabs-wrap">
     <button class="tab active" onclick="switchTab('calculator')">⚡ Calculator</button>
-    <button class="tab" onclick="switchTab('bom')">📋 Bill of Materials</button>
-    <button class="tab" id="sld-tab" onclick="switchTab('sld')">🔌 Single-Line Diagram</button>
+    <button class="tab" id="bom-tab" onclick="switchTab('bom')" style="display:none">📋 Bill of Materials</button>
+    <button class="tab" id="sld-tab" onclick="switchTab('sld')" style="display:none">🔌 Single-Line Diagram</button>
   </div>
 
   <div class="panel active" id="tab-calculator">
@@ -1509,7 +1553,19 @@ function doCalculate() {
   var btn=document.querySelector('.calc-btn');
   if(btn){btn.style.animation='none';}
   var sldTab=document.getElementById('sld-tab');
-  if(sldTab)sldTab.style.display='';
+  var bomTab=document.getElementById('bom-tab');
+  if(bomTab && bomTab.style.display==='none'){
+    bomTab.style.display='';
+    bomTab.classList.add('tab-revealed');
+    setTimeout(function(){bomTab.classList.remove('tab-revealed');},600);
+  }
+  if(sldTab && sldTab.style.display==='none'){
+    sldTab.style.display='';
+    sldTab.classList.add('tab-revealed');
+    setTimeout(function(){sldTab.classList.remove('tab-revealed');},700);
+  } else if(sldTab) {
+    sldTab.style.display='';
+  }
   // Show inverter row
   var invRow=document.getElementById('inverter-row');
   if(invRow){invRow.style.display='';}
